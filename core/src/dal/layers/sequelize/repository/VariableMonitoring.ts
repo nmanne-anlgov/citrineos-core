@@ -16,10 +16,20 @@ import type {
   SetMonitoringStatusEnumType,
 } from '@citrineos/base';
 import {
+  Component,
+  EventData,
+  Variable,
+  VariableMonitoring,
+  VariableMonitoringStatus,
+} from '../model/index.js';
+import type { IVariableMonitoringRepository } from '../../../interfaces/index.js';
+import type { BootstrapConfig, CallAction } from '@citrineos/base';
+import {
   CrudRepository,
   OCPP2_0_1,
+  OCPP2_1,
+  OCPP2_common_types,
   OCPP_CallAction,
-  SetMonitoringStatusEnum,
 } from '@citrineos/base';
 import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
@@ -96,7 +106,7 @@ export class SequelizeVariableMonitoringRepository
           );
           await this.createVariableMonitoringStatus(
             tenantId,
-            SetMonitoringStatusEnum.Accepted,
+            OCPP2_0_1.SetMonitoringStatusEnumType.Accepted,
             OCPP_CallAction.NotifyMonitoringReport,
             savedVariableMonitoring.get('databaseId'),
           );
