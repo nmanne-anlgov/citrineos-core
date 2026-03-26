@@ -34,21 +34,38 @@ export class MeterValueUtils {
       return 0;
     }
 
-    const registerMap = this.getRegisterValuesMap(filteredValues);
-    if (registerMap.size > 0) {
-      const sorted = this.getSortedKwhByTimestampAscending(registerMap);
-      if (meterStart === undefined) {
-        return sorted[sorted.length - 1] - sorted[0];
+    // Try register-based calculation (import - export)
+    const importRegisterMap = this.getRegisterValuesMap(filteredValues);
+    const exportRegisterMap = this.getExportRegisterValuesMap(filteredValues);
+    if (importRegisterMap.size > 0 || exportRegisterMap.size > 0) {
+      let importKwh = 0;
+      if (importRegisterMap.size > 0) {
+        const sorted = this.getSortedKwhByTimestampAscending(importRegisterMap);
+        importKwh =
+          meterStart === undefined
+            ? sorted[sorted.length - 1] - sorted[0]
+            : sorted[sorted.length - 1] - meterStart;
       }
-      return sorted[sorted.length - 1] - meterStart;
+      let exportKwh = 0;
+      if (exportRegisterMap.size > 0) {
+        const sorted = this.getSortedKwhByTimestampAscending(exportRegisterMap);
+        exportKwh = sorted[sorted.length - 1] - sorted[0];
+      }
+      return importKwh - exportKwh;
     }
 
-    const intervalMap = this.getIntervalValuesMap(filteredValues);
-    if (intervalMap.size > 0) {
-      const sorted = this.getSortedKwhByTimestampAscending(intervalMap);
-      return sorted.reduce((sum, v) => sum + v, currentTotal);
+    // Try interval-based calculation (import - export)
+    const importIntervalMap = this.getIntervalValuesMap(filteredValues);
+    const exportIntervalMap = this.getExportIntervalValuesMap(filteredValues);
+    if (importIntervalMap.size > 0 || exportIntervalMap.size > 0) {
+      const importSorted = this.getSortedKwhByTimestampAscending(importIntervalMap);
+      const exportSorted = this.getSortedKwhByTimestampAscending(exportIntervalMap);
+      const importSum = importSorted.reduce((sum, v) => sum + v, 0);
+      const exportSum = exportSorted.reduce((sum, v) => sum + v, 0);
+      return currentTotal + importSum - exportSum;
     }
 
+    // Fall back to net values (Energy.Active.Net already represents net energy)
     const netMap = this.getNetValuesMap(filteredValues);
     if (netMap.size > 0) {
       const latestTimestamp = Math.max(...Array.from(netMap.keys()));
@@ -111,6 +128,30 @@ export class MeterValueUtils {
   }
 
   /**
+   * Extracts Energy.Active.Export.Register measurand values into a timestamp-to-kWh map.
+   * @param meterValues Array of MeterValueType to search for export register readings.
+   * @returns Map where each key is the reading timestamp (ms since epoch) and each value is the normalized kWh.
+   */
+  private static getExportRegisterValuesMap(meterValues: MeterValueDto[]): Map<number, number> {
+    const valuesMap = new Map<number, number>();
+    for (const mv of meterValues) {
+      const ts = Date.parse(mv.timestamp);
+      let val = this.findMeasurandValue(
+        mv.sampledValue,
+        MeasurandEnum['Energy.Active.Export.Register'],
+        false,
+      );
+      if (val === null) {
+        val = this.sumPhasedValues(mv.sampledValue, MeasurandEnum['Energy.Active.Export.Register']);
+      }
+      if (val !== null) {
+        valuesMap.set(ts, val);
+      }
+    }
+    return valuesMap;
+  }
+
+  /**
    * Extracts Energy.Active.Import.Interval measurand values into a timestamp-to-kWh map.
    * @param meterValues Array of MeterValueType to search for interval readings.
    * @returns Map where each key is the reading timestamp (ms since epoch) and each value is the normalized kWh.
@@ -126,6 +167,30 @@ export class MeterValueUtils {
       );
       if (val === null) {
         val = this.sumPhasedValues(mv.sampledValue, MeasurandEnum['Energy.Active.Import.Interval']);
+      }
+      if (val !== null) {
+        valuesMap.set(ts, val);
+      }
+    }
+    return valuesMap;
+  }
+
+  /**
+   * Extracts Energy.Active.Export.Interval measurand values into a timestamp-to-kWh map.
+   * @param meterValues Array of MeterValueType to search for export interval readings.
+   * @returns Map where each key is the reading timestamp (ms since epoch) and each value is the normalized kWh.
+   */
+  private static getExportIntervalValuesMap(meterValues: MeterValueDto[]): Map<number, number> {
+    const valuesMap = new Map<number, number>();
+    for (const mv of meterValues) {
+      const ts = Date.parse(mv.timestamp);
+      let val = this.findMeasurandValue(
+        mv.sampledValue,
+        MeasurandEnum['Energy.Active.Export.Interval'],
+        false,
+      );
+      if (val === null) {
+        val = this.sumPhasedValues(mv.sampledValue, MeasurandEnum['Energy.Active.Export.Interval']);
       }
       if (val !== null) {
         valuesMap.set(ts, val);

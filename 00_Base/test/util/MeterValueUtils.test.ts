@@ -385,4 +385,88 @@ describe('MeterValueUtils', () => {
       expect(MeterValueUtils.getTotalKwh(meterValues, 0)).toBe(120); // 180 - 60
     });
   });
+
+  describe('Bidirectional energy (V2X)', () => {
+    describe('Register-based net energy', () => {
+      it('computes net energy as import minus export for register values', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Register', 100),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Import.Register', 200),
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Export.Register', 0),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Export.Register', 30),
+        ];
+        expect(MeterValueUtils.getTotalKwh(meterValues, 0)).toBe(70); // 100 - 30
+      });
+
+      it('returns negative when export exceeds import (pure discharge)', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Register', 100),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Import.Register', 100),
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Export.Register', 0),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Export.Register', 50),
+        ];
+        expect(MeterValueUtils.getTotalKwh(meterValues, 0)).toBe(-50); // 0 - 50
+      });
+
+      it('handles export-only register values (no import registers)', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Export.Register', 0),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Export.Register', 75),
+        ];
+        expect(MeterValueUtils.getTotalKwh(meterValues, 0)).toBe(-75); // 0 import - 75 export
+      });
+
+      it('uses meterStart for import when provided with bidirectional registers', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Register', 100),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Import.Register', 200),
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Export.Register', 0),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Export.Register', 20),
+        ];
+        // Import: 200 - 50 (meterStart) = 150, Export: 20 - 0 = 20, Net: 150 - 20 = 130
+        expect(MeterValueUtils.getTotalKwh(meterValues, 0, 50)).toBe(130);
+      });
+    });
+
+    describe('Interval-based net energy', () => {
+      it('computes net energy as import minus export for interval values', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Interval', 50),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Import.Interval', 50),
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Export.Interval', 10),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Export.Interval', 15),
+        ];
+        // Import sum: 50 + 50 = 100, Export sum: 10 + 15 = 25
+        // Net: currentTotal + importSum - exportSum = 0 + 100 - 25 = 75
+        expect(MeterValueUtils.getTotalKwh(meterValues, 0)).toBe(75);
+      });
+
+      it('adds interval net energy to currentTotal', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Interval', 50),
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Export.Interval', 20),
+        ];
+        // Net: 100 (currentTotal) + 50 - 20 = 130
+        expect(MeterValueUtils.getTotalKwh(meterValues, 100)).toBe(130);
+      });
+    });
+
+    describe('No regression for import-only sessions', () => {
+      it('import-only register calculation unchanged', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Register', 100),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Import.Register', 250),
+        ];
+        expect(MeterValueUtils.getTotalKwh(meterValues, 0)).toBe(150);
+      });
+
+      it('import-only interval calculation unchanged', () => {
+        const meterValues = [
+          makeMeterValue('2025-05-29T12:01:00Z', 'Energy.Active.Import.Interval', 50),
+          makeMeterValue('2025-05-29T12:02:00Z', 'Energy.Active.Import.Interval', 60),
+        ];
+        expect(MeterValueUtils.getTotalKwh(meterValues, 10)).toBe(120); // 10 + 50 + 60
+      });
+    });
+  });
 });
