@@ -205,6 +205,7 @@ export enum ChargingStateEnumType {
   SuspendedEV = 'SuspendedEV',
   SuspendedEVSE = 'SuspendedEVSE',
   Idle = 'Idle',
+  Discharging = 'Discharging',
 }
 
 /**
