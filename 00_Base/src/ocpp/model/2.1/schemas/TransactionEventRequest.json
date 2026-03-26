@@ -7,8 +7,15 @@
       "javaType": "ChargingStateEnum",
       "type": "string",
       "additionalProperties": false,
-      "enum": ["EVConnected", "Charging", "SuspendedEV", "SuspendedEVSE", "Idle"],
-      "tsEnumNames": ["EVConnected", "Charging", "SuspendedEV", "SuspendedEVSE", "Idle"]
+      "enum": ["EVConnected", "Charging", "SuspendedEV", "SuspendedEVSE", "Idle", "Discharging"],
+      "tsEnumNames": [
+        "EVConnected",
+        "Charging",
+        "SuspendedEV",
+        "SuspendedEVSE",
+        "Idle",
+        "Discharging"
+      ]
     },
     "CostDimensionEnumType": {
       "description": "Type of cost dimension: energy, power, time, etc.\r\n\r\n",
