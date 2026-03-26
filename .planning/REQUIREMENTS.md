@@ -9,7 +9,7 @@
 
 - [ ] **VALID-01**: OCPPValidator uses correct request schema record for OCPP 2.1 message validation (fix bug at OCPPValidator.ts:144)
 - [ ] **VALID-02**: ChargingState DTO enum includes "Discharging" value for V2X sessions
-- [ ] **VALID-03**: Measurand DTO enum includes OCPP 2.1 V2X measurands (Energy.Active.Export.*, Display.*, Setpoint.*)
+- [ ] **VALID-03**: Measurand DTO enum includes OCPP 2.1 V2X measurands (Energy.Active.Export._, Display._, Setpoint.\*)
 
 ### Energy Accounting
 
@@ -29,7 +29,7 @@
 
 ### Connection Guide
 
-- [ ] **GUIDE-01**: Documentation explains how to connect an OCPP 2.1 charging station client to CitrineOS (WebSocket URL, subprotocol, auth, Docker setup)
+- [x] **GUIDE-01**: Documentation explains how to connect an OCPP 2.1 charging station client to CitrineOS (WebSocket URL, subprotocol, auth, Docker setup)
 
 ## v2 Requirements
 
@@ -53,40 +53,42 @@
 
 ## Out of Scope
 
-| Feature | Reason |
-|---------|--------|
+| Feature                                         | Reason                                          |
+| ----------------------------------------------- | ----------------------------------------------- |
 | Cost/compensation calculation for V2G discharge | High complexity, not needed for flow validation |
-| DER/grid services integration | Separate domain, future work |
-| GetCompositeSchedule 2.1 handler | Not required for basic V2X discharge flow |
-| DynamicControl real-time setpoints | Beyond initial scheduled control validation |
-| ISO 15118 / Plug&Charge | Separate concern from OCPP message flow |
-| Production deployment / performance | This is dev/test validation only |
-| OCPP 2.1 features unrelated to V2X | Not the focus of this effort |
-| Charging station client implementation | User has their own client |
+| DER/grid services integration                   | Separate domain, future work                    |
+| GetCompositeSchedule 2.1 handler                | Not required for basic V2X discharge flow       |
+| DynamicControl real-time setpoints              | Beyond initial scheduled control validation     |
+| ISO 15118 / Plug&Charge                         | Separate concern from OCPP message flow         |
+| Production deployment / performance             | This is dev/test validation only                |
+| OCPP 2.1 features unrelated to V2X              | Not the focus of this effort                    |
+| Charging station client implementation          | User has their own client                       |
 
 ## Traceability
 
 Which phases cover which requirements. Updated during roadmap creation.
 
-| Requirement | Phase | Status |
-|-------------|-------|--------|
-| VALID-01 | Phase 1 | Pending |
-| VALID-02 | Phase 1 | Pending |
-| VALID-03 | Phase 1 | Pending |
-| ENRGY-01 | Phase 1 | Pending |
-| ENRGY-02 | Phase 1 | Pending |
-| SMART-01 | Phase 2 | Pending |
-| SMART-02 | Phase 2 | Pending |
-| SMART-03 | Phase 2 | Pending |
-| SMART-04 | Phase 2 | Pending |
-| EVDRV-01 | Phase 2 | Pending |
-| GUIDE-01 | Phase 3 | Pending |
+| Requirement | Phase   | Status   |
+| ----------- | ------- | -------- |
+| VALID-01    | Phase 1 | Pending  |
+| VALID-02    | Phase 1 | Pending  |
+| VALID-03    | Phase 1 | Pending  |
+| ENRGY-01    | Phase 1 | Pending  |
+| ENRGY-02    | Phase 1 | Pending  |
+| SMART-01    | Phase 2 | Pending  |
+| SMART-02    | Phase 2 | Pending  |
+| SMART-03    | Phase 2 | Pending  |
+| SMART-04    | Phase 2 | Pending  |
+| EVDRV-01    | Phase 2 | Pending  |
+| GUIDE-01    | Phase 3 | Complete |
 
 **Coverage:**
+
 - v1 requirements: 11 total
 - Mapped to phases: 11
 - Unmapped: 0
 
 ---
-*Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after roadmap creation*
+
+_Requirements defined: 2026-03-26_
+_Last updated: 2026-03-26 after roadmap creation_
