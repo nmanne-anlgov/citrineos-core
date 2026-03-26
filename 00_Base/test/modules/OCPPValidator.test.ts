@@ -9,6 +9,7 @@ import {
   OCPP1_6_CALL_SCHEMA_RECORD,
   OCPP2_0_1_CALL_RESULT_SCHEMA_RECORD,
   OCPP2_0_1_CALL_SCHEMA_RECORD,
+  OCPP2_1_CALL_SCHEMA_RECORD,
   OCPP_CallAction,
   OCPPVersion,
 } from '../../src/index.js';
@@ -209,6 +210,44 @@ describe('OCPPValidator', () => {
         );
 
         expect(result.isValid).toBe(true);
+      });
+    });
+
+    describe('OCPP 2.1', () => {
+      it('should validate a valid Heartbeat request', () => {
+        const result = validator.validateOCPPRequest(
+          OCPP_CallAction.Heartbeat,
+          {},
+          OCPPVersion.OCPP2_1,
+        );
+        expect(result.isValid).toBe(true);
+      });
+
+      it('should validate a valid BootNotification request', () => {
+        const payload = {
+          chargingStation: {
+            model: 'TestModel',
+            vendorName: 'TestVendor',
+          },
+          reason: 'PowerUp',
+        };
+        const result = validator.validateOCPPRequest(
+          OCPP_CallAction.BootNotification,
+          payload,
+          OCPPVersion.OCPP2_1,
+        );
+        expect(result.isValid).toBe(true);
+      });
+
+      it('should reject an invalid BootNotification request', () => {
+        const result = validator.validateOCPPRequest(
+          OCPP_CallAction.BootNotification,
+          {},
+          OCPPVersion.OCPP2_1,
+        );
+        expect(result.isValid).toBe(false);
+        expect(result.errors).toBeDefined();
+        expect(result.errors!.length).toBeGreaterThan(0);
       });
     });
 
@@ -631,11 +670,14 @@ describe('OCPPValidator', () => {
     it.each([
       [OCPP_CallAction.BootNotification, OCPPVersion.OCPP2_0_1, 'OCPP 2.0.1'],
       [OCPP_CallAction.BootNotification, OCPPVersion.OCPP1_6, 'OCPP 1.6'],
+      [OCPP_CallAction.BootNotification, OCPPVersion.OCPP2_1, 'OCPP 2.1'],
     ])('should have request schemas for %s in %s', (action, version) => {
       const schemaMap =
-        version === OCPPVersion.OCPP2_0_1
-          ? OCPP2_0_1_CALL_SCHEMA_RECORD
-          : OCPP1_6_CALL_SCHEMA_RECORD;
+        version === OCPPVersion.OCPP2_1
+          ? OCPP2_1_CALL_SCHEMA_RECORD
+          : version === OCPPVersion.OCPP2_0_1
+            ? OCPP2_0_1_CALL_SCHEMA_RECORD
+            : OCPP1_6_CALL_SCHEMA_RECORD;
       expect(schemaMap[action]).toBeDefined();
     });
 
