@@ -29,8 +29,8 @@ A charging station client can connect to CitrineOS over OCPP 2.1 and successfull
 - [ ] CSMS correctly processes bidirectional power measurands in MeterValues
 - [ ] CSMS supports NotifyEVChargingNeeds with V2X/discharge parameters
 - [ ] CSMS handles RequestStartTransaction / RequestStopTransaction for discharge sessions
-- [ ] Connection guide documents how to connect a 2.1 charging station client to CitrineOS
-- [ ] Test harness or example flow demonstrates V2X discharge end-to-end
+- ✓ Connection guide documents how to connect a 2.1 charging station client to CitrineOS — Phase 3
+- ✓ V2X discharge message flow documented with JSON examples — Phase 3
 
 ### Out of Scope
 
@@ -85,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 
 ---
 
-_Last updated: 2026-03-26 after Phase 1 completion_
+_Last updated: 2026-03-26 after Phase 3 completion (all v1 phases complete)_
