@@ -30,5 +30,7 @@
   "hooks": {
     "context_warnings": true
   },
-  "agent_skills": {}
+  "agent_skills": {},
+  "mode": "yolo",
+  "granularity": "coarse"
 }
