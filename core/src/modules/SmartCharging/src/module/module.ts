@@ -191,21 +191,32 @@ export class SmartChargingModule extends AbstractModule {
       `Found active transaction on station ${stationId} evse ${request.evseId}: ${JSON.stringify(activeTransaction)}`,
     );
 
-    // OCPP 2.0.1 Part 2 K17.FR.06
-    const hasAcOrDcChargingParameters =
-      givenNeeds.dcChargingParameters !== null || givenNeeds.acChargingParameters !== null;
-    this._logger.info(`Has AC or DC charging parameters: ${hasAcOrDcChargingParameters}`);
+    // OCPP 2.0.1 Part 2 K17.FR.06 (extended for V2X BPT modes)
+    const hasChargingParameters =
+      givenNeeds.dcChargingParameters != null ||
+      givenNeeds.acChargingParameters != null ||
+      givenNeeds.v2xChargingParameters != null;
+    this._logger.info(`Has charging parameters: ${hasChargingParameters}`);
+
+    const isBptMode = [
+      OCPP2_1.EnergyTransferModeEnumType.AC_BPT,
+      OCPP2_1.EnergyTransferModeEnumType.DC_BPT,
+      OCPP2_1.EnergyTransferModeEnumType.AC_BPT_DER,
+      OCPP2_1.EnergyTransferModeEnumType.DC_ACDP_BPT,
+    ].includes(givenNeeds.requestedEnergyTransfer as OCPP2_1.EnergyTransferModeEnumType);
 
     const matchedChargingType =
       ((givenNeeds.dcChargingParameters ?? false) &&
         givenNeeds.requestedEnergyTransfer === EnergyTransferModeEnum.DC) ||
       ((givenNeeds.acChargingParameters ?? false) &&
-        givenNeeds.requestedEnergyTransfer !== EnergyTransferModeEnum.DC);
+        givenNeeds.requestedEnergyTransfer !== EnergyTransferModeEnum.DC &&
+        !isBptMode) ||
+      (isBptMode && givenNeeds.v2xChargingParameters != null);
     this._logger.info(
       `Matched chargingParameters and requestedEnergyTransfer type: ${matchedChargingType}`,
     );
 
-    if (!activeTransaction || !hasAcOrDcChargingParameters || !matchedChargingType) {
+    if (!activeTransaction || !hasChargingParameters || !matchedChargingType) {
       await this.sendCallResultWithMessage(message, {
         status: NotifyEVChargingNeedsStatusEnum.Rejected,
       } as OCPP2_response_types.NotifyEVChargingNeedsResponse);
