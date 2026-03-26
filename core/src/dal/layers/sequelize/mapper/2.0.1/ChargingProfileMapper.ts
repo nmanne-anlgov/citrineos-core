@@ -50,9 +50,18 @@ export interface ChargingScheduleInput {
 
 export interface ChargingSchedulePeriodInput {
   startPeriod: number;
-  limit: number;
+  limit?: number | null;
   numberPhases?: number | null;
   phaseToUse?: number | null;
+  // OCPP 2.1 V2X fields
+  dischargeLimit?: number | null;
+  dischargeLimit_L2?: number | null;
+  dischargeLimit_L3?: number | null;
+  setpoint?: number | null;
+  setpoint_L2?: number | null;
+  setpoint_L3?: number | null;
+  limit_L2?: number | null;
+  limit_L3?: number | null;
 }
 
 export interface SalesTariffInput {
@@ -188,6 +197,7 @@ export class ChargingProfileMapper {
         schedule.chargingRateUnit,
       ),
       chargingSchedulePeriod: schedule.chargingSchedulePeriod.map((period) => ({
+        ...period,
         startPeriod: period.startPeriod,
         limit: period.limit,
         numberPhases: period.numberPhases,
@@ -213,6 +223,7 @@ export class ChargingProfileMapper {
   ): CompositeScheduleInput {
     return {
       chargingSchedulePeriod: compositeSchedule.chargingSchedulePeriod.map((period) => ({
+        ...period,
         startPeriod: period.startPeriod,
         limit: period.limit,
         numberPhases: period.numberPhases,
