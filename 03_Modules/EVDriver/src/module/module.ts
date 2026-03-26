@@ -768,6 +768,22 @@ export class EVDriverModule extends AbstractModule {
     );
   }
 
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.NotifyAllowedEnergyTransfer)
+  protected async _handleNotifyAllowedEnergyTransfer(
+    message: IMessage<OCPP2_response_types.NotifyAllowedEnergyTransferResponse>,
+    props?: HandlerProperties,
+  ): Promise<void> {
+    this._logger.debug('NotifyAllowedEnergyTransfer response received:', message, props);
+    const response = message.payload;
+    if (response.status === OCPP2_1.NotifyAllowedEnergyTransferStatusEnumType.Rejected) {
+      this._logger.warn(
+        `Station rejected NotifyAllowedEnergyTransfer: ${JSON.stringify(response.statusInfo)}`,
+      );
+    } else {
+      this._logger.info('Station accepted NotifyAllowedEnergyTransfer');
+    }
+  }
+
   /**
    * Handle OCPP 1.6 responses
    */
