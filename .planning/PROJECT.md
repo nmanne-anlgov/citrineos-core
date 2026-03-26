@@ -18,6 +18,10 @@ A charging station client can connect to CitrineOS over OCPP 2.1 and successfull
 - ✓ Module-based handler architecture with decorator-driven dispatch — existing
 - ✓ Docker Compose deployment with PostgreSQL, RabbitMQ, MinIO — existing
 - ✓ Multi-version OCPP support (1.6, 2.0.1, 2.1 subprotocols) — existing
+- ✓ OCPP 2.1 request validation uses correct schemas — Phase 1
+- ✓ ChargingState enum supports "Discharging" for V2X sessions — Phase 1
+- ✓ MeasurandEnum includes all OCPP 2.1 V2X measurands — Phase 1
+- ✓ MeterValueUtils computes net energy for bidirectional sessions — Phase 1
 
 ### Active
 
@@ -54,17 +58,18 @@ A charging station client can connect to CitrineOS over OCPP 2.1 and successfull
 
 ## Key Decisions
 
-| Decision | Rationale | Outcome |
-|----------|-----------|---------|
+| Decision                    | Rationale                                                       | Outcome   |
+| --------------------------- | --------------------------------------------------------------- | --------- |
 | Focus on V2X discharge only | User needs to validate one specific flow, not full 2.1 coverage | — Pending |
-| Docker deployment | User's preferred environment | — Pending |
-| Gap analysis before fixes | Understand what exists before implementing | — Pending |
+| Docker deployment           | User's preferred environment                                    | — Pending |
+| Gap analysis before fixes   | Understand what exists before implementing                      | — Pending |
 
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
 
 **After each phase transition** (via `/gsd:transition`):
+
 1. Requirements invalidated? → Move to Out of Scope with reason
 2. Requirements validated? → Move to Validated with phase reference
 3. New requirements emerged? → Add to Active
@@ -72,10 +77,12 @@ This document evolves at phase transitions and milestone boundaries.
 5. "What This Is" still accurate? → Update if drifted
 
 **After each milestone** (via `/gsd:complete-milestone`):
+
 1. Full review of all sections
 2. Core Value check — still the right priority?
 3. Audit Out of Scope — reasons still valid?
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after initialization*
+
+_Last updated: 2026-03-26 after Phase 1 completion_
