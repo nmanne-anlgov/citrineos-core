@@ -70,23 +70,23 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VALID-01 | | Pending |
-| VALID-02 | | Pending |
-| VALID-03 | | Pending |
-| ENRGY-01 | | Pending |
-| ENRGY-02 | | Pending |
-| SMART-01 | | Pending |
-| SMART-02 | | Pending |
-| SMART-03 | | Pending |
-| SMART-04 | | Pending |
-| EVDRV-01 | | Pending |
-| GUIDE-01 | | Pending |
+| VALID-01 | Phase 1 | Pending |
+| VALID-02 | Phase 1 | Pending |
+| VALID-03 | Phase 1 | Pending |
+| ENRGY-01 | Phase 1 | Pending |
+| ENRGY-02 | Phase 1 | Pending |
+| SMART-01 | Phase 2 | Pending |
+| SMART-02 | Phase 2 | Pending |
+| SMART-03 | Phase 2 | Pending |
+| SMART-04 | Phase 2 | Pending |
+| EVDRV-01 | Phase 2 | Pending |
+| GUIDE-01 | Phase 3 | Pending |
 
 **Coverage:**
 - v1 requirements: 11 total
-- Mapped to phases: 0
-- Unmapped: 11
+- Mapped to phases: 11
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-26 after roadmap creation*
