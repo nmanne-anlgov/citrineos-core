@@ -105,6 +105,7 @@ export function createDockerConfig() {
           OCPP_CallAction.UnlockConnector,
           OCPP_CallAction.RemoteStopTransaction,
           OCPP_CallAction.RemoteStartTransaction,
+          OCPP_CallAction.NotifyAllowedEnergyTransfer,
         ],
         requests: [OCPP_CallAction.Authorize, OCPP_CallAction.ReservationStatusUpdate],
       },
