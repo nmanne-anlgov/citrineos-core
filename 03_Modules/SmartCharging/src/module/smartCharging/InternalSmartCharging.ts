@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type { ISmartCharging } from './SmartCharging.js';
-import { ChargingProfilePurposeEnum, OCPP2_0_1 } from '@citrineos/base';
+import { ChargingProfilePurposeEnum, OCPP2_0_1, OCPP2_1 } from '@citrineos/base';
 import type { IChargingProfileRepository } from '@citrineos/data';
 import { ChargingProfile, ChargingSchedule, Transaction } from '@citrineos/data';
 import type { ILogObj } from 'tslog';
@@ -33,11 +33,11 @@ export class InternalSmartCharging implements ISmartCharging {
    * @throws Error if the energy transfer mode is unsupported.
    */
   async calculateChargingProfile(
-    request: OCPP2_0_1.NotifyEVChargingNeedsRequest,
+    request: OCPP2_1.NotifyEVChargingNeedsRequest,
     transaction: Transaction,
     tenantId: number,
     stationId: string,
-  ): Promise<OCPP2_0_1.ChargingProfileType> {
+  ): Promise<OCPP2_1.ChargingProfileType> {
     const { chargingNeeds } = request;
 
     const acParams = chargingNeeds.acChargingParameters;
@@ -66,26 +66,27 @@ export class InternalSmartCharging implements ISmartCharging {
     let limit = 0;
     let numberPhases: number | undefined;
     let minChargingRate: number | undefined;
-    let chargingRateUnit: OCPP2_0_1.ChargingRateUnitEnumType = OCPP2_0_1.ChargingRateUnitEnumType.A;
+    let dischargeLimit: number | undefined;
+    let chargingRateUnit: OCPP2_1.ChargingRateUnitEnumType = OCPP2_1.ChargingRateUnitEnumType.A;
     // Determine charging parameters based on energy transfer mode
     switch (transferMode) {
-      case OCPP2_0_1.EnergyTransferModeEnumType.AC_single_phase:
-      case OCPP2_0_1.EnergyTransferModeEnumType.AC_two_phase:
-      case OCPP2_0_1.EnergyTransferModeEnumType.AC_three_phase:
+      case OCPP2_1.EnergyTransferModeEnumType.AC_single_phase:
+      case OCPP2_1.EnergyTransferModeEnumType.AC_two_phase:
+      case OCPP2_1.EnergyTransferModeEnumType.AC_three_phase:
         if (acParams) {
           const { evMinCurrent, evMaxCurrent } = acParams;
           numberPhases =
-            transferMode === OCPP2_0_1.EnergyTransferModeEnumType.AC_single_phase
+            transferMode === OCPP2_1.EnergyTransferModeEnumType.AC_single_phase
               ? 1
-              : transferMode === OCPP2_0_1.EnergyTransferModeEnumType.AC_two_phase
+              : transferMode === OCPP2_1.EnergyTransferModeEnumType.AC_two_phase
                 ? 2
                 : 3; // For AC_three_phase
-          chargingRateUnit = OCPP2_0_1.ChargingRateUnitEnumType.A; // always use amp for AC
+          chargingRateUnit = OCPP2_1.ChargingRateUnitEnumType.A; // always use amp for AC
           limit = evMaxCurrent;
           minChargingRate = evMinCurrent;
         }
         break;
-      case OCPP2_0_1.EnergyTransferModeEnumType.DC:
+      case OCPP2_1.EnergyTransferModeEnumType.DC:
         if (dcParams) {
           const { evMaxPower, evMaxCurrent, evMaxVoltage } = dcParams;
           numberPhases = undefined; // For a DC EVSE this field should be omitted.
@@ -96,6 +97,27 @@ export class InternalSmartCharging implements ISmartCharging {
           );
         }
         break;
+      case OCPP2_1.EnergyTransferModeEnumType.AC_BPT:
+      case OCPP2_1.EnergyTransferModeEnumType.AC_BPT_DER: {
+        const v2xParams = chargingNeeds.v2xChargingParameters;
+        if (v2xParams) {
+          chargingRateUnit = OCPP2_1.ChargingRateUnitEnumType.W;
+          limit = v2xParams.maxChargePower ?? 0;
+          dischargeLimit = v2xParams.maxDischargePower ? -v2xParams.maxDischargePower : undefined;
+        }
+        break;
+      }
+      case OCPP2_1.EnergyTransferModeEnumType.DC_BPT:
+      case OCPP2_1.EnergyTransferModeEnumType.DC_ACDP_BPT: {
+        const v2xParams = chargingNeeds.v2xChargingParameters;
+        if (v2xParams) {
+          numberPhases = undefined;
+          chargingRateUnit = OCPP2_1.ChargingRateUnitEnumType.W;
+          limit = v2xParams.maxChargePower ?? 0;
+          dischargeLimit = v2xParams.maxDischargePower ? -v2xParams.maxDischargePower : undefined;
+        }
+        break;
+      }
       default:
         throw new Error('Unsupported energy transfer mode');
     }
@@ -110,17 +132,18 @@ export class InternalSmartCharging implements ISmartCharging {
 
     // Create charging period
     const chargingSchedulePeriod: [
-      OCPP2_0_1.ChargingSchedulePeriodType,
-      ...OCPP2_0_1.ChargingSchedulePeriodType[],
+      OCPP2_1.ChargingSchedulePeriodType,
+      ...OCPP2_1.ChargingSchedulePeriodType[],
     ] = [
       {
         startPeriod: 0,
         limit,
         numberPhases,
+        dischargeLimit,
       },
     ];
 
-    const chargingSchedule: OCPP2_0_1.ChargingScheduleType = {
+    const chargingSchedule: OCPP2_1.ChargingScheduleType = {
       id: scheduleId,
       duration,
       chargingRateUnit,
@@ -131,17 +154,17 @@ export class InternalSmartCharging implements ISmartCharging {
     return {
       id: profileId,
       stackLevel,
-      chargingProfilePurpose: OCPP2_0_1.ChargingProfilePurposeEnumType.TxProfile,
-      chargingProfileKind: OCPP2_0_1.ChargingProfileKindEnumType.Absolute,
+      chargingProfilePurpose: OCPP2_1.ChargingProfilePurposeEnumType.TxProfile,
+      chargingProfileKind: OCPP2_1.ChargingProfileKindEnumType.Absolute,
       validFrom: currentTime.toISOString(), // Now
       validTo: chargingNeeds.departureTime, // Until departure
       chargingSchedule: [chargingSchedule],
       transactionId: transaction.transactionId,
-    } as OCPP2_0_1.ChargingProfileType;
+    } as OCPP2_1.ChargingProfileType;
   }
 
   async checkLimitsOfChargingSchedule(
-    request: OCPP2_0_1.NotifyEVChargingScheduleRequest,
+    request: OCPP2_1.NotifyEVChargingScheduleRequest,
     tenantId: number,
     stationId: string,
     transaction: Transaction,
@@ -183,13 +206,13 @@ export class InternalSmartCharging implements ISmartCharging {
     evMaxCurrent: number,
     evMaxVoltage: number,
     evMaxPower?: number | null,
-  ): [OCPP2_0_1.ChargingRateUnitEnumType, number] {
+  ): [OCPP2_1.ChargingRateUnitEnumType, number] {
     if (evMaxPower && evMaxPower < evMaxCurrent * evMaxVoltage) {
       // when charging rate unit is W, multiply by 1000
       // based on OCPP 2.0.1 V3 Part 6 TC_K_57_CS
-      return [OCPP2_0_1.ChargingRateUnitEnumType.W, evMaxPower * 1000];
+      return [OCPP2_1.ChargingRateUnitEnumType.W, evMaxPower * 1000];
     }
-    return [OCPP2_0_1.ChargingRateUnitEnumType.A, evMaxCurrent * evMaxVoltage];
+    return [OCPP2_1.ChargingRateUnitEnumType.A, evMaxCurrent * evMaxVoltage];
   }
 
   private async _findExistingChargingProfileWithHighestStackLevel(
