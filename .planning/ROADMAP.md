@@ -27,7 +27,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. A TransactionEvent with chargingState "Discharging" passes DTO validation without error
   3. MeterValues containing Energy.Active.Export.Register and Display/Setpoint measurands pass DTO validation
   4. MeterValueUtils correctly computes net energy (import minus export) for a session with bidirectional power flow
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md -- Fix OCPPValidator 2.1 schema bug, add Discharging to ChargingState enums, add V2X measurands
+- [ ] 01-02-PLAN.md -- Add export energy handling to MeterValueUtils and bidirectional net energy calculation
 
 ### Phase 2: V2X Module Handlers
 **Goal**: The SmartCharging module accepts V2X charging needs, generates discharge-aware profiles, and the EVDriver module is configured to route NotifyAllowedEnergyTransfer
@@ -58,6 +61,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation Fixes | 0/0 | Not started | - |
+| 1. Foundation Fixes | 0/2 | Planning complete | - |
 | 2. V2X Module Handlers | 0/0 | Not started | - |
 | 3. Integration and Connection Guide | 0/0 | Not started | - |
