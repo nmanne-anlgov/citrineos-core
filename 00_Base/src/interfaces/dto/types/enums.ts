@@ -300,6 +300,8 @@ export const MonitorEnumSchema = z.enum([
   'Delta',
   'Periodic',
   'PeriodicClockAligned',
+  'TargetDelta',
+  'TargetDeltaRelative',
 ]);
 
 export const MessagePriorityEnumSchema = z.enum(['AlwaysFront', 'InFront', 'NormalCycle']);
