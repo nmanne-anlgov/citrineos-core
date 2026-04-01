@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-export { OCPP2_0_1_Namespace, OCPP1_6_Namespace, Namespace } from './namespace.js';
+export { OCPP2_Namespace, OCPP1_6_Namespace, Namespace } from './namespace.js';
 export { QuerySchema, MessageConfirmationSchema } from './querySchema.js';
 export { default as AuthorizationDataSchema } from './schemas/AuthorizationDataSchema.json' with { type: 'json' };
 export { default as BootConfigSchema } from './schemas/BootConfigSchema.json' with { type: 'json' };

@@ -7,7 +7,7 @@ import type {
   TenantDto,
   StatusInfo,
 } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -23,7 +23,7 @@ import { VariableMonitoring } from './VariableMonitoring.js';
 
 @Table
 export class VariableMonitoringStatus extends Model implements VariableMonitoringStatusDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.VariableMonitoringStatus;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.VariableMonitoringStatus;
 
   @Column(DataType.STRING)
   declare status: string;

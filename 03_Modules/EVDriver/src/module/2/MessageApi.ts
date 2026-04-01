@@ -12,15 +12,19 @@ import {
   AbstractModuleApi,
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
+  getOcpp2Schema,
   OCPP2_0_1,
+  OCPP2_request_types,
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
-import { validateChargingProfileType } from '@citrineos/util';
+import { packageGroupCall, validateChargingProfileType } from '@citrineos/util';
 import { OCPP2_0_1_Mapper } from '@citrineos/data';
 import { v4 as uuidv4 } from 'uuid';
 
-export class EVDriverOcpp201Api
+const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
+
+export class EVDriverOcpp2Api
   extends AbstractModuleApi<EVDriverModule>
   implements IEVDriverModuleApi
 {
@@ -31,13 +35,20 @@ export class EVDriverOcpp201Api
    * @param {FastifyInstance} server - The Fastify server instance.
    * @param {Logger<ILogObj>} [logger] - The logger for logging.
    */
-  constructor(evDriverModule: EVDriverModule, server: FastifyInstance, logger?: Logger<ILogObj>) {
-    super(evDriverModule, server, OCPPVersion.OCPP2_0_1, logger);
+  constructor(
+    evDriverModule: EVDriverModule,
+    server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(evDriverModule, server, version, logger);
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.RequestStartTransaction,
-    OCPP2_0_1.RequestStartTransactionRequestSchema,
+  @AsMessageEndpoint(OCPP_CallAction.RequestStartTransaction, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'RequestStartTransactionRequestSchema',
+    ),
   )
   async requestStartTransaction(
     identifier: string[],
@@ -146,33 +157,40 @@ export class EVDriverOcpp201Api
     return results;
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.RequestStopTransaction,
-    OCPP2_0_1.RequestStopTransactionRequestSchema,
+  //TODO: 2.1 version of start transaction
+
+  @AsMessageEndpoint(OCPP_CallAction.RequestStopTransaction, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'RequestStopTransactionRequestSchema',
+    ),
   )
   async requestStopTransaction(
     identifier: string[],
-    request: OCPP2_0_1.RequestStopTransactionRequest,
+    request: OCPP2_request_types.RequestStopTransactionRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.RequestStopTransaction,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.RequestStopTransaction,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.CancelReservation, OCPP2_0_1.CancelReservationRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.CancelReservation, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'CancelReservationRequestSchema',
+    ),
+  )
   async cancelReservation(
     identifiers: string[],
-    request: OCPP2_0_1.CancelReservationRequest,
+    request: OCPP2_request_types.CancelReservationRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
@@ -201,20 +219,15 @@ export class EVDriverOcpp201Api
       }
 
       // Send the CancelReservation call for each station
-      const results = await Promise.all(
-        identifiers.map(async (identifier, _index) =>
-          this._module.sendCall(
-            identifier,
-            tenantId,
-            OCPPVersion.OCPP2_0_1,
-            OCPP_CallAction.CancelReservation,
-            request,
-            callbackUrl,
-          ),
-        ),
+      return packageGroupCall(
+        this._module.sendCall,
+        identifiers,
+        tenantId,
+        this._ocppVersion ?? DEFAULT_VERSION,
+        OCPP_CallAction.CancelReservation,
+        request,
+        callbackUrl,
       );
-
-      return results;
     } catch (error) {
       this._logger.error(
         `CancelReservation request failed: ${
@@ -229,10 +242,15 @@ export class EVDriverOcpp201Api
     }
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ReserveNow, OCPP2_0_1.ReserveNowRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.ReserveNow, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'ReserveNowRequestSchema',
+    ),
+  )
   async reserveNow(
     identifier: string[],
-    request: OCPP2_0_1.ReserveNowRequest,
+    request: OCPP2_request_types.ReserveNowRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
@@ -278,50 +296,61 @@ export class EVDriverOcpp201Api
     return results;
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.UnlockConnector, OCPP2_0_1.UnlockConnectorRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.UnlockConnector, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'UnlockConnectorRequestSchema',
+    ),
+  )
   unlockConnector(
     identifier: string[],
-    request: OCPP2_0_1.UnlockConnectorRequest,
+    request: OCPP2_request_types.UnlockConnectorRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.UnlockConnector,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.UnlockConnector,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.ClearCache, OCPP2_0_1.ClearCacheRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.ClearCache, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'ClearCacheRequestSchema',
+    ),
+  )
   clearCache(
     identifier: string[],
-    request: OCPP2_0_1.ClearCacheRequest,
+    request: OCPP2_request_types.ClearCacheRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.ClearCache,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.ClearCache,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.SendLocalList, OCPP2_0_1.SendLocalListRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.SendLocalList, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'SendLocalListRequestSchema',
+    ),
+  )
   async sendLocalList(
     identifier: string[],
-    request: OCPP2_0_1.SendLocalListRequest,
+    request: OCPP2_request_types.SendLocalListRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
@@ -341,7 +370,7 @@ export class EVDriverOcpp201Api
         const confirmation = await this._module.sendCall(
           i,
           tenantId,
-          OCPPVersion.OCPP2_0_1,
+          this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.SendLocalList,
           request,
           callbackUrl,
@@ -360,27 +389,27 @@ export class EVDriverOcpp201Api
     return results;
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetLocalListVersion,
-    OCPP2_0_1.GetLocalListVersionRequestSchema,
+  @AsMessageEndpoint(OCPP_CallAction.GetLocalListVersion, (instance: EVDriverOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetLocalListVersionRequestSchema',
+    ),
   )
   getLocalListVersion(
     identifier: string[],
-    request: OCPP2_0_1.GetLocalListVersionRequest,
+    request: OCPP2_request_types.GetLocalListVersionRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.GetLocalListVersion,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.GetLocalListVersion,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
   /**

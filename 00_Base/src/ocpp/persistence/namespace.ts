@@ -27,7 +27,7 @@ export enum Namespace {
   Tenant = 'Tenant',
 }
 
-export enum OCPP2_0_1_Namespace {
+export enum OCPP2_Namespace {
   AdditionalInfoType = 'AdditionalInfoType',
   AuthorizationRestrictions = 'AuthorizationRestrictions',
   Certificate = 'Certificate',

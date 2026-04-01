@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import { OCPP2_0_1 } from '@citrineos/base';
+import { OCPP2_0_1, OCPP2_request_types } from '@citrineos/base';
 import type { IDeviceModelRepository, ILocalAuthListRepository } from '@citrineos/data';
 import {
   LocalListAuthorization,
@@ -35,7 +35,7 @@ export class LocalAuthListService {
     tenantId: number,
     stationId: string,
     correlationId: string,
-    sendLocalListRequest: OCPP2_0_1.SendLocalListRequest,
+    sendLocalListRequest: OCPP2_request_types.SendLocalListRequest,
   ): Promise<SendLocalList> {
     const localListVersion = await this._localAuthListRepository.readOnlyOneByQuery(tenantId, {
       where: {
@@ -88,7 +88,7 @@ export class LocalAuthListService {
     tenantId: number,
     stationId: string,
     correlationId: string,
-    sendLocalListRequest: OCPP2_0_1.SendLocalListRequest,
+    sendLocalListRequest: OCPP2_request_types.SendLocalListRequest,
     localListVersion?: LocalListVersion,
   ): Promise<SendLocalList> {
     if (sendLocalListRequest.versionNumber <= 0) {

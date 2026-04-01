@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { HttpMethod } from './index.js';
-import { Namespace, OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '../../index.js';
+import { Namespace, OCPP1_6_Namespace, OCPP2_Namespace } from '../../index.js';
 
 /**
  * Interface for usage in {@link AsDataEndpoint} decorator.
@@ -11,7 +11,7 @@ import { Namespace, OCPP1_6_Namespace, OCPP2_0_1_Namespace } from '../../index.j
 export interface IDataEndpointDefinition {
   method: (...args: any[]) => any;
   methodName: string;
-  namespace: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace;
+  namespace: OCPP2_Namespace | OCPP1_6_Namespace | Namespace;
   httpMethod: HttpMethod;
   querySchema?: object;
   bodySchema?: object;

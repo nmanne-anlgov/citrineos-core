@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type { VariableDto, TenantDto } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -34,7 +34,7 @@ import { VariableCharacteristics } from './VariableCharacteristics.js';
   ],
 })
 export class Variable extends Model implements OCPP2_0_1.VariableType, VariableDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.VariableType;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.VariableType;
 
   /**
    * Fields

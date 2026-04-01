@@ -11,9 +11,9 @@ import type {
   IMessageHandler,
   IMessageSender,
   SystemConfig,
-  OCPP2_common_types,
   OCPP2_request_types,
   OCPP2_response_types,
+  RegistrationStatusEnumType,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -243,8 +243,10 @@ export class ConfigurationModule extends AbstractModule {
       await this._bootService.createBootNotificationResponse(tenantId, stationId);
 
     // Check cached boot status for charger. Only Pending and Rejected statuses are cached.
-    const cachedBootStatus: OCPP2_common_types.RegistrationStatusEnumType | null =
-      await this._cache.get(BOOT_STATUS, stationId);
+    const cachedBootStatus: RegistrationStatusEnumType | null = await this._cache.get(
+      BOOT_STATUS,
+      stationId,
+    );
 
     // Blacklist or whitelist charger actions in cache
     await this._bootService.cacheChargerActionsPermissions(

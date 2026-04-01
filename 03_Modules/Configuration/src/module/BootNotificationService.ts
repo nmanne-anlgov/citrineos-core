@@ -3,7 +3,13 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { IBootRepository } from '@citrineos/data';
 import { Boot, OCPP1_6_Mapper, OCPP2_0_1_Mapper } from '@citrineos/data';
-import type { BootConfig, ICache, IMessageConfirmation, SystemConfig } from '@citrineos/base';
+import type {
+  BootConfig,
+  ICache,
+  IMessageConfirmation,
+  RegistrationStatusEnumType,
+  SystemConfig,
+} from '@citrineos/base';
 import {
   BOOT_STATUS,
   OCPP1_6,
@@ -125,7 +131,7 @@ export class BootNotificationService {
    */
   async cacheChargerActionsPermissions(
     stationId: string,
-    cachedBootStatus: OCPP2_0_1.RegistrationStatusEnumType | null,
+    cachedBootStatus: RegistrationStatusEnumType | null,
     bootNotificationResponseStatus: OCPP2_0_1.RegistrationStatusEnumType,
   ): Promise<void> {
     // New boot status is Accepted and cachedBootStatus exists (meaning there was a previous Rejected or Pending boot)

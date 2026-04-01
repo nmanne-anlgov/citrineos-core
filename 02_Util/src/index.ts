@@ -40,5 +40,5 @@ export {
 } from './util/validator.js';
 export { IdGenerator } from './util/idGenerator.js';
 export { isValidPassword, generatePassword } from './security/authentication.js';
-
+export { packageGroupCall } from './util/sendCall.js';
 export { SignedMeterValuesUtil } from './security/SignedMeterValuesUtil.js';

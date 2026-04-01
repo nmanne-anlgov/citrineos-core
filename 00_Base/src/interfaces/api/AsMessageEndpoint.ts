@@ -16,7 +16,7 @@ import type { CallAction } from '../../ocpp/rpc/message.js';
  */
 export const AsMessageEndpoint = function (
   action: CallAction,
-  bodySchema: object,
+  bodySchema: object | ((instance: any) => object),
   optionalQuerystrings?: Record<string, any>,
 ) {
   return (target: any, propertyKey: string, descriptor: PropertyDescriptor): void => {

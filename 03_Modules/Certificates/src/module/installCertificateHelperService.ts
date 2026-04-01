@@ -22,6 +22,7 @@ import {
 import {
   type CertificateUseEnumType,
   type IFileStorage,
+  type InstallCertificateStatusEnumType,
   OCPP2_0_1,
   type WebsocketServerConfig,
 } from '@citrineos/base';
@@ -131,7 +132,7 @@ export class InstallCertificateHelperService {
   async finalizeInstalledCertificate(
     tenantId: number,
     stationId: string,
-    status: OCPP2_0_1.InstallCertificateStatusEnumType,
+    status: InstallCertificateStatusEnumType,
   ) {
     const existingPendingInstallCertificateAttempt =
       await this.installCertificateAttemptRepository.readOnlyOneByQuery(tenantId, {

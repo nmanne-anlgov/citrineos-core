@@ -9,7 +9,7 @@ import type {
   ACChargingParametersType,
   DCChargingParametersType,
 } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -26,7 +26,7 @@ import { Transaction } from '../TransactionEvent/index.js';
 
 @Table
 export class ChargingNeeds extends Model implements ChargingNeedsDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.ChargingNeeds;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.ChargingNeeds;
 
   /**
    * Fields

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { DeleteCertificateAttempt } from '@citrineos/data';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { CertificatesModule, CertificatesOcpp201Api } from '../../../src';
+import { CertificatesModule, CertificatesOcpp2Api } from '../../../src';
 import {
   DEFAULT_TENANT_ID,
   IMessageConfirmation,
@@ -57,7 +57,7 @@ const mockDeleteCertificateRepository = {
 const mockSendCall = vi.fn();
 
 describe('CertificatesOcpp201Api', () => {
-  let messageApi: CertificatesOcpp201Api;
+  let messageApi: CertificatesOcpp2Api;
   let mockCertificatesModule: CertificatesModule;
   const mockInstallCertificateRequest = aInstallCertificateRequest();
   const mockDeleteCertificateRequest = aDeleteCertificateRequest();
@@ -72,7 +72,7 @@ describe('CertificatesOcpp201Api', () => {
       sendCall: mockSendCall,
     } as unknown as CertificatesModule;
 
-    messageApi = new CertificatesOcpp201Api(mockCertificatesModule, mockFastifyInstance);
+    messageApi = new CertificatesOcpp2Api(mockCertificatesModule, mockFastifyInstance);
   });
 
   describe('installCertificate', () => {

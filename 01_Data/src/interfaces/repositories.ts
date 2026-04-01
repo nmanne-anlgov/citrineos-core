@@ -15,6 +15,9 @@ import type {
   OCPP2_common_types,
   OCPP2_request_types,
   OCPPMessageDto,
+  RegistrationStatusEnumType,
+  UpdateEnumType,
+  ChargingStateEnumType,
 } from '@citrineos/base';
 import type {
   Authorization,
@@ -88,7 +91,7 @@ export interface IBootRepository extends CrudRepository<BootConfig> {
   ) => Promise<Boot | undefined>;
   updateStatusByKey: (
     tenantId: number,
-    status: OCPP2_common_types.RegistrationStatusEnumType,
+    status: RegistrationStatusEnumType,
     statusInfo: OCPP2_common_types.StatusInfoType | undefined,
     key: string,
   ) => Promise<Boot | undefined>;
@@ -183,7 +186,7 @@ export interface ILocalAuthListRepository extends CrudRepository<LocalListVersio
     tenantId: number,
     stationId: string,
     correlationId: string,
-    updateType: OCPP2_common_types.UpdateEnumType,
+    updateType: UpdateEnumType,
     versionNumber: number,
     localAuthorizationList?: OCPP2_common_types.AuthorizationData[],
   ): Promise<SendLocalList>;
@@ -326,7 +329,7 @@ export interface ITransactionEventRepository extends CrudRepository<TransactionE
     tenantId: number,
     stationId: string,
     evse: OCPP2_common_types.EVSEType,
-    chargingStates?: OCPP2_common_types.ChargingStateEnumType[],
+    chargingStates?: ChargingStateEnumType[],
   ): Promise<Transaction[]>;
   readAllActiveTransactionsByAuthorizationId(
     tenantId: number,

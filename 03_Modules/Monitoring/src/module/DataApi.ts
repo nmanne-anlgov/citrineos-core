@@ -25,7 +25,7 @@ import {
   Namespace,
   OCPP1_6_Namespace,
   OCPP2_0_1,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
   ReportDataTypeSchema,
 } from '@citrineos/base';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
@@ -53,7 +53,7 @@ export class MonitoringDataApi
   }
 
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.VariableAttributeType,
+    OCPP2_Namespace.VariableAttributeType,
     HttpMethod.Put,
     CreateOrUpdateVariableAttributeQuerySchema,
     ReportDataTypeSchema,
@@ -105,7 +105,7 @@ export class MonitoringDataApi
   }
 
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.VariableAttributeType,
+    OCPP2_Namespace.VariableAttributeType,
     HttpMethod.Get,
     VariableAttributeQuerySchema,
   )
@@ -119,7 +119,7 @@ export class MonitoringDataApi
   }
 
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.VariableAttributeType,
+    OCPP2_Namespace.VariableAttributeType,
     HttpMethod.Delete,
     VariableAttributeQuerySchema,
   )
@@ -134,7 +134,7 @@ export class MonitoringDataApi
         (deletedCount) =>
           deletedCount.toString() +
           ' rows successfully deleted from ' +
-          OCPP2_0_1_Namespace.VariableAttributeType,
+          OCPP2_Namespace.VariableAttributeType,
       );
   }
 
@@ -145,7 +145,7 @@ export class MonitoringDataApi
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = this._module.config.modules.monitoring.endpointPrefix;
     return super._toDataPath(input, endpointPrefix);
   }

@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 import type { EvseTypeDto, TenantDto } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   AutoIncrement,
   BeforeCreate,
@@ -29,7 +29,7 @@ import { Tenant } from '../Tenant.js';
   ],
 })
 export class EvseType extends Model implements OCPP2_0_1.EVSEType, EvseTypeDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.EVSEType;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.EVSEType;
 
   /**
    * Fields

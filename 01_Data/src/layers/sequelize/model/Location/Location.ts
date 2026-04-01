@@ -8,7 +8,7 @@ import type {
   Point,
   TenantDto,
 } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, LocationHours, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, LocationHours, OCPP2_Namespace } from '@citrineos/base';
 import {
   BeforeCreate,
   BeforeUpdate,
@@ -29,7 +29,7 @@ import { ChargingStation } from './ChargingStation.js';
  */
 @Table
 export class Location extends Model implements LocationDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.Location;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.Location;
 
   @Column(DataType.STRING)
   declare name: string;

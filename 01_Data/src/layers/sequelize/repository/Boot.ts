@@ -1,8 +1,13 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { BootConfig, BootstrapConfig } from '@citrineos/base';
-import { CrudRepository, OCPP2_0_1 } from '@citrineos/base';
+import type {
+  BootConfig,
+  BootstrapConfig,
+  OCPP2_common_types,
+  RegistrationStatusEnumType,
+} from '@citrineos/base';
+import { CrudRepository } from '@citrineos/base';
 import type { IBootRepository } from '../../../interfaces/index.js';
 import { Boot } from '../model/Boot.js';
 import { VariableAttribute } from '../model/index.js';
@@ -77,8 +82,8 @@ export class SequelizeBootRepository extends SequelizeRepository<Boot> implement
 
   async updateStatusByKey(
     tenantId: number,
-    status: OCPP2_0_1.RegistrationStatusEnumType,
-    statusInfo: OCPP2_0_1.StatusInfoType | undefined,
+    status: RegistrationStatusEnumType,
+    statusInfo: OCPP2_common_types.StatusInfoType | undefined,
     key: string,
   ): Promise<Boot | undefined> {
     return await this.updateByKey(tenantId, { status, statusInfo }, key);

@@ -11,6 +11,7 @@ import {
   OCPP_CallAction,
   OCPP2_0_1,
   SystemConfig,
+  OCPP2_1,
 } from '@citrineos/base';
 import path from 'node:path';
 
@@ -66,6 +67,12 @@ export function aSystemConfig(override?: Partial<SystemConfig>): SystemConfig {
         ],
         heartbeatInterval: 60,
         bootRetryInterval: 15,
+        ocpp2_1: {
+          unknownChargerStatus: OCPP2_1.RegistrationStatusEnumType.Accepted,
+          getBaseReportOnPending: true,
+          bootWithRejectedVariables: true,
+          autoAccept: true,
+        },
         ocpp2_0_1: {
           unknownChargerStatus: OCPP2_0_1.RegistrationStatusEnumType.Accepted,
           getBaseReportOnPending: true,
@@ -211,6 +218,16 @@ export function aSystemConfig(override?: Partial<SystemConfig>): SystemConfig {
             host: '0.0.0.0',
             port: 8092,
             protocol: 'ocpp1.6',
+            tenantId: DEFAULT_TENANT_ID,
+          },
+          {
+            id: '3',
+            securityProfile: 0,
+            allowUnknownChargingStations: true,
+            pingInterval: 60,
+            host: '0.0.0.0',
+            port: 8083,
+            protocol: 'ocpp2.1',
             tenantId: DEFAULT_TENANT_ID,
           },
         ],

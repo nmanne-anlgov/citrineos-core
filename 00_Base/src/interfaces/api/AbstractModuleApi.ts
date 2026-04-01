@@ -17,7 +17,7 @@ import {
   OCPPVersion,
   systemConfigSchema,
 } from '../../index.js';
-import { OCPP2_0_1_Namespace } from '../../ocpp/persistence/index.js';
+import { OCPP2_Namespace } from '../../ocpp/persistence/index.js';
 import type { CallAction } from '../../ocpp/rpc/message.js';
 import type { IMessageConfirmation } from '../messages/index.js';
 import type { IModule } from '../modules/index.js';
@@ -33,7 +33,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
   protected readonly _server: FastifyInstance;
   protected readonly _module: T;
   protected readonly _logger: Logger<ILogObj>;
-  private readonly _ocppVersion: OCPPVersion | null;
+  protected readonly _ocppVersion: OCPPVersion | null;
 
   constructor(
     module: T,
@@ -67,7 +67,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
         this,
         expose.action,
         expose.method,
-        expose.bodySchema,
+        typeof expose.bodySchema === 'function' ? expose.bodySchema(this) : expose.bodySchema,
         expose.optionalQuerystrings,
       );
     });
@@ -179,7 +179,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
   /**
    * Add a message route to the server.
    *
-   * @param {OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace} namespace - The entity type.
+   * @param {OCPP2_Namespace | OCPP1_6_Namespace | Namespace} namespace - The entity type.
    * @param {Function} method - The method to be executed.
    * @param {HttpMethod} httpMethod - The HTTP method to be used.
    * @param {object} querySchema - The schema for the querystring.
@@ -193,7 +193,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
    * @return {void}
    */
   protected _addDataRoute(
-    namespace: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace,
+    namespace: OCPP2_Namespace | OCPP1_6_Namespace | Namespace,
     method: (...args: any[]) => any,
     httpMethod: HttpMethod,
     querySchema?: object,
@@ -384,7 +384,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
   protected registerSystemConfigRoutes(module: T) {
     this._addDataRoute.call(
       this,
-      OCPP2_0_1_Namespace.SystemConfig,
+      OCPP2_Namespace.SystemConfig,
       () => new Promise((resolve) => resolve(module.config)),
       HttpMethod.Get,
     );
@@ -394,7 +394,7 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
     });
     this._addDataRoute.call(
       this,
-      OCPP2_0_1_Namespace.SystemConfig,
+      OCPP2_Namespace.SystemConfig,
       async (request: FastifyRequest<{ Body: SystemConfig }>) => {
         await ConfigStoreFactory.getInstance().saveConfig(request.body);
         module.config = request.body;
@@ -468,12 +468,12 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
   /**
    * Convert a namespace to a normed lowercase URL path.
    *
-   * @param {OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace} input - The {@link OCPP2_0_1_Namespace} or {@link OCPP1_6_Namespace} or {@link Namespace} to convert to a URL path.
+   * @param {OCPP2_Namespace | OCPP1_6_Namespace | Namespace} input - The {@link OCPP2_Namespace} or {@link OCPP1_6_Namespace} or {@link Namespace} to convert to a URL path.
    * @param {string} prefix - The module name.
    * @returns {string} - String representation of URL path.
    */
   protected _toDataPath(
-    input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace,
+    input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace,
     prefix?: string,
   ): string {
     const endpointPrefix = prefix || '';

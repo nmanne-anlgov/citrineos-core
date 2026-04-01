@@ -1,15 +1,16 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { CallAction, IMessageConfirmation } from '@citrineos/base';
+import type { CallAction, IMessageConfirmation, OCPP2_request_types } from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
-  OCPP2_0_1,
+  getOcpp2Schema,
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
+import { packageGroupCall } from '@citrineos/util';
 import type { FastifyInstance } from 'fastify';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
@@ -20,7 +21,10 @@ import { DeleteCertificateAttempt } from '@citrineos/data';
 /**
  * Server API for the Certificates module.
  */
-export class CertificatesOcpp201Api
+
+const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
+
+export class CertificatesOcpp2Api
   extends AbstractModuleApi<CertificatesModule>
   implements ICertificatesModuleApi
 {
@@ -34,39 +38,48 @@ export class CertificatesOcpp201Api
   constructor(
     certificatesModule: CertificatesModule,
     server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
     logger?: Logger<ILogObj>,
   ) {
-    super(certificatesModule, server, OCPPVersion.OCPP2_0_1, logger);
+    super(certificatesModule, server, version, logger);
   }
 
   /**
    * Interface implementation
    */
 
-  @AsMessageEndpoint(OCPP_CallAction.CertificateSigned, OCPP2_0_1.CertificateSignedRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.CertificateSigned, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'CertificateSignedRequestSchema',
+    ),
+  )
   certificateSigned(
     identifier: string[],
-    request: OCPP2_0_1.CertificateSignedRequest,
+    request: OCPP2_request_types.CertificateSignedRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.CertificateSigned,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.CertificateSigned,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.InstallCertificate, OCPP2_0_1.InstallCertificateRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.InstallCertificate, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'InstallCertificateRequestSchema',
+    ),
+  )
   installCertificate(
     identifier: string[],
-    request: OCPP2_0_1.InstallCertificateRequest,
+    request: OCPP2_request_types.InstallCertificateRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
@@ -80,7 +93,7 @@ export class CertificatesOcpp201Api
       return this._module.sendCall(
         id,
         tenantId,
-        OCPPVersion.OCPP2_0_1,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.InstallCertificate,
         request,
         callbackUrl,
@@ -89,33 +102,38 @@ export class CertificatesOcpp201Api
     return Promise.all(results);
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetInstalledCertificateIds,
-    OCPP2_0_1.GetInstalledCertificateIdsRequestSchema,
+  @AsMessageEndpoint(OCPP_CallAction.GetInstalledCertificateIds, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetInstalledCertificateIdsRequestSchema',
+    ),
   )
   getInstalledCertificateIds(
     identifier: string[],
-    request: OCPP2_0_1.GetInstalledCertificateIdsRequest,
+    request: OCPP2_request_types.GetInstalledCertificateIdsRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.GetInstalledCertificateIds,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.GetInstalledCertificateIds,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.DeleteCertificate, OCPP2_0_1.DeleteCertificateRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.DeleteCertificate, (instance: CertificatesOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'DeleteCertificateRequestSchema',
+    ),
+  )
   deleteCertificate(
     identifier: string[],
-    request: OCPP2_0_1.DeleteCertificateRequest,
+    request: OCPP2_request_types.DeleteCertificateRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
@@ -144,7 +162,7 @@ export class CertificatesOcpp201Api
       return this._module.sendCall(
         id,
         tenantId,
-        OCPPVersion.OCPP2_0_1,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.DeleteCertificate,
         request,
         callbackUrl,

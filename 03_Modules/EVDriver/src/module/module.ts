@@ -14,9 +14,9 @@ import type {
   IMessageHandler,
   IMessageSender,
   SystemConfig,
-  OCPP2_common_types,
   OCPP2_response_types,
   OCPP2_request_types,
+  ReservationUpdateStatusEnumType,
 } from '@citrineos/base';
 import {
   AbstractModule,
@@ -510,8 +510,7 @@ export class EVDriverModule extends AbstractModule {
     this._logger.debug('ReservationStatusUpdateRequest received:', message, props);
 
     try {
-      const status = message.payload
-        .reservationUpdateStatus as OCPP2_common_types.ReservationUpdateStatusEnumType;
+      const status = message.payload.reservationUpdateStatus as ReservationUpdateStatusEnumType;
       const reservation = await this._reservationRepository.readOnlyOneByQuery(
         message.context.tenantId,
         {

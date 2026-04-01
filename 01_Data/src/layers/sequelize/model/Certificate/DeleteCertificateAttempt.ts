@@ -11,13 +11,19 @@ import {
   Model,
   Table,
 } from 'sequelize-typescript';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace, type TenantDto } from '@citrineos/base';
+import {
+  DEFAULT_TENANT_ID,
+  OCPP2_Namespace,
+  type DeleteCertificateStatusEnumType,
+  type HashAlgorithmEnumType,
+  type TenantDto,
+} from '@citrineos/base';
 import { ChargingStation } from '../Location/index.js';
 import { Tenant } from '../Tenant.js';
 
 @Table
 export class DeleteCertificateAttempt extends Model {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.DeleteCertificateAttempt;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.DeleteCertificateAttempt;
 
   @ForeignKey(() => ChargingStation)
   @Column({
@@ -33,7 +39,7 @@ export class DeleteCertificateAttempt extends Model {
     type: DataType.STRING,
     allowNull: false,
   })
-  declare hashAlgorithm: OCPP2_0_1.HashAlgorithmEnumType;
+  declare hashAlgorithm: HashAlgorithmEnumType;
 
   @Column(DataType.STRING)
   declare issuerNameHash: string;
@@ -47,7 +53,7 @@ export class DeleteCertificateAttempt extends Model {
   @Column({
     type: DataType.STRING,
   })
-  declare status?: OCPP2_0_1.DeleteCertificateStatusEnumType | null;
+  declare status?: DeleteCertificateStatusEnumType | null;
 
   @ForeignKey(() => Tenant)
   @Column({

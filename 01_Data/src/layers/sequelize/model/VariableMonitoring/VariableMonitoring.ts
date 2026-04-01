@@ -8,7 +8,7 @@ import type {
   TenantDto,
   MonitorEnumType,
 } from '@citrineos/base';
-import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_0_1_Namespace } from '@citrineos/base';
+import { DEFAULT_TENANT_ID, OCPP2_0_1, OCPP2_Namespace } from '@citrineos/base';
 import {
   AutoIncrement,
   BeforeCreate,
@@ -27,7 +27,7 @@ import { Tenant } from '../Tenant.js';
 
 @Table
 export class VariableMonitoring extends Model implements VariableMonitoringDto {
-  static readonly MODEL_NAME: string = OCPP2_0_1_Namespace.VariableMonitoringType;
+  static readonly MODEL_NAME: string = OCPP2_Namespace.VariableMonitoringType;
 
   /**
    * Fields

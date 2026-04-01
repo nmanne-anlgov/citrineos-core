@@ -26,6 +26,8 @@ import {
   OCPP2_request_types,
   OCPP2_common_types,
   type CertificateUseEnumType,
+  type CertificateSigningUseEnumType,
+  type InstallCertificateStatusEnumType,
 } from '@citrineos/base';
 import type {
   ICertificateRepository,
@@ -283,7 +285,7 @@ export class CertificatesModule extends AbstractModule {
     const tenantId = message.context.tenantId;
     const stationId: string = message.context.stationId;
     const csrString: string = message.payload.csr.replace(/\n/g, '');
-    const certificateType: OCPP2_common_types.CertificateSigningUseEnumType | undefined | null =
+    const certificateType: CertificateSigningUseEnumType | undefined | null =
       message.payload.certificateType;
 
     // Validate PEM format
@@ -364,7 +366,7 @@ export class CertificatesModule extends AbstractModule {
     await this.installCertificateHelperService.finalizeInstalledCertificate(
       message.context.tenantId,
       message.context.stationId,
-      message.payload.status as unknown as OCPP2_common_types.InstallCertificateStatusEnumType,
+      message.payload.status as unknown as InstallCertificateStatusEnumType,
     );
     // TODO: If rejected, retry and/or send to callbackUrl if originally part of a triggered refresh
     // TODO: If accepted, revoke old certificate
@@ -520,7 +522,7 @@ export class CertificatesModule extends AbstractModule {
     csrString: string,
     tenantId: number,
     stationId: string,
-    certificateType?: OCPP2_common_types.CertificateSigningUseEnumType | null,
+    certificateType?: CertificateSigningUseEnumType | null,
   ): Promise<void> {
     // Verify certificate type
     if (

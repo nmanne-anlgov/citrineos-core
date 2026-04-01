@@ -4,24 +4,33 @@
 
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
-import type { CallAction, IMessageConfirmation } from '@citrineos/base';
+import {
+  OCPP2_common_types,
+  OCPP2_request_types,
+  type CallAction,
+  type IMessageConfirmation,
+  type MonitoringCriterionEnumType,
+} from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
-  OCPP2_0_1,
+  getOcpp2Schema,
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
+import { packageGroupCall } from '@citrineos/util';
 import type { FastifyInstance } from 'fastify';
 import type { IReportingModuleApi } from '../interface.js';
 import { ReportingModule } from '../module.js';
 import { getBatches, getSizeOfRequest } from '@citrineos/util';
 
+const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
+
 /**
  * Server API for the Reporting module.
  */
-export class ReportingOcpp201Api
+export class ReportingOcpp2Api
   extends AbstractModuleApi<ReportingModule>
   implements IReportingModuleApi
 {
@@ -34,35 +43,47 @@ export class ReportingOcpp201Api
    * @param {FastifyInstance} server - The Fastify server instance.
    * @param {Logger<ILogObj>} [logger] - The logger instance.
    */
-  constructor(reportingModule: ReportingModule, server: FastifyInstance, logger?: Logger<ILogObj>) {
-    super(reportingModule, server, OCPPVersion.OCPP2_0_1, logger);
+  constructor(
+    reportingModule: ReportingModule,
+    server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
+    logger?: Logger<ILogObj>,
+  ) {
+    super(reportingModule, server, version, logger);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetBaseReport, OCPP2_0_1.GetBaseReportRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.GetBaseReport, (instance: ReportingOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetBaseReportRequestSchema',
+    ),
+  )
   getBaseReport(
     identifier: string[],
-    request: OCPP2_0_1.GetBaseReportRequest,
+    request: OCPP2_request_types.GetBaseReportRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    // For each station, send the GetBaseReport call
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.GetBaseReport,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.GetBaseReport,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetReport, OCPP2_0_1.GetReportRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.GetReport, (instance: ReportingOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetReportRequestSchema',
+    ),
+  )
   async getCustomReport(
     identifier: string,
-    request: OCPP2_0_1.GetReportRequest,
+    request: OCPP2_request_types.GetReportRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation> {
@@ -81,13 +102,15 @@ export class ReportingOcpp201Api
       return { success: false, payload: errorMsg };
     }
 
-    const componentVariables = request.componentVariable as OCPP2_0_1.ComponentVariableType[];
+    const componentVariables =
+      request.componentVariable as OCPP2_common_types.ComponentVariableType[];
+
     if (componentVariables.length === 0) {
       // Send everything in one call
       return await this._module.sendCall(
         identifier,
         tenantId,
-        OCPPVersion.OCPP2_0_1,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.GetReport,
         request,
         callbackUrl,
@@ -115,13 +138,9 @@ export class ReportingOcpp201Api
         const batchResult = await this._module.sendCall(
           identifier,
           tenantId,
-          OCPPVersion.OCPP2_0_1,
+          this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.GetReport,
-          {
-            componentVariable: batch,
-            componentCriteria: request.componentCriteria,
-            requestId: request.requestId,
-          } as OCPP2_0_1.GetReportRequest,
+          { ...request, componentVariable: batch } as OCPP2_request_types.GetReportRequest,
           callbackUrl,
         );
         confirmations.push({
@@ -142,26 +161,28 @@ export class ReportingOcpp201Api
     return { success: true, payload: confirmations };
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetMonitoringReport,
-    OCPP2_0_1.GetMonitoringReportRequestSchema,
+  @AsMessageEndpoint(OCPP_CallAction.GetMonitoringReport, (instance: ReportingOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetMonitoringReportRequestSchema',
+    ),
   )
   async getMonitoringReport(
     identifier: string,
-    request: OCPP2_0_1.GetMonitoringReportRequest,
+    request: OCPP2_request_types.GetMonitoringReportRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation> {
     // If monitoringCriteria & componentVariable are both empty, just call once
-    const componentVariable = request.componentVariable as OCPP2_0_1.ComponentVariableType[];
-    const monitoringCriteria =
-      request.monitoringCriteria as OCPP2_0_1.MonitoringCriterionEnumType[];
+    const componentVariable =
+      request.componentVariable as OCPP2_common_types.ComponentVariableType[];
+    const monitoringCriteria = request.monitoringCriteria as MonitoringCriterionEnumType[];
 
     if (componentVariable.length === 0 && monitoringCriteria.length === 0) {
       return await this._module.sendCall(
         identifier,
         tenantId,
-        OCPPVersion.OCPP2_0_1,
+        this._ocppVersion ?? DEFAULT_VERSION,
         OCPP_CallAction.GetMonitoringReport,
         request,
         callbackUrl,
@@ -188,13 +209,12 @@ export class ReportingOcpp201Api
         const batchResult = await this._module.sendCall(
           identifier,
           tenantId,
-          OCPPVersion.OCPP2_0_1,
+          this._ocppVersion ?? DEFAULT_VERSION,
           OCPP_CallAction.GetMonitoringReport,
           {
+            ...request,
             componentVariable: batch,
-            monitoringCriteria,
-            requestId: request.requestId,
-          } as OCPP2_0_1.GetMonitoringReportRequest,
+          } as OCPP2_request_types.GetMonitoringReportRequest,
           callbackUrl,
         );
         confirmations.push({
@@ -214,47 +234,50 @@ export class ReportingOcpp201Api
     return { success: true, payload: confirmations };
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.GetLog, OCPP2_0_1.GetLogRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.GetLog, (instance: ReportingOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetLogRequestSchema',
+    ),
+  )
   getLog(
     identifier: string[],
-    request: OCPP2_0_1.GetLogRequest,
+    request: OCPP2_request_types.GetLogRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.GetLog,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.GetLog,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.CustomerInformation,
-    OCPP2_0_1.CustomerInformationRequestSchema,
+  @AsMessageEndpoint(OCPP_CallAction.CustomerInformation, (instance: ReportingOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'CustomerInformationRequestSchema',
+    ),
   )
   customerInformation(
     identifier: string[],
-    request: OCPP2_0_1.CustomerInformationRequest,
+    request: OCPP2_request_types.CustomerInformationRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results: Promise<IMessageConfirmation>[] = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.CustomerInformation,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.CustomerInformation,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
   /**

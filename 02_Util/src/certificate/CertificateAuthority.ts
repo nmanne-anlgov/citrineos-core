@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2025 Contributors to the CitrineOS Project
 //
 // SPDX-License-Identifier: Apache-2.0
-import type { ICache, SystemConfig } from '@citrineos/base';
-import { OCPP2_1 } from '@citrineos/base';
+import type { CertificateSigningUseEnumType, ICache, SystemConfig } from '@citrineos/base';
+import { CertificateSigningUseEnum, OCPP2_1 } from '@citrineos/base';
 import { Crypto } from '@peculiar/webcrypto';
 import jsrsasign, { KJUR, X509 } from 'jsrsasign';
 import moment from 'moment';
@@ -67,14 +67,14 @@ export class CertificateAuthorityService {
   async getCertificateChain(
     csrString: string,
     stationId: string,
-    certificateType?: OCPP2_1.CertificateSigningUseEnumType | null,
+    certificateType?: CertificateSigningUseEnumType | null,
   ): Promise<string> {
     this._logger.info(
       `Getting certificate chain for certificateType: ${certificateType} and stationId: ${stationId}`,
     );
 
     switch (certificateType) {
-      case OCPP2_1.CertificateSigningUseEnumType.V2GCertificate: {
+      case CertificateSigningUseEnum.V2GCertificate: {
         const signedCert = await this._v2gClient.getSignedCertificate(
           extractEncodedContentFromCSR(csrString),
         );

@@ -24,7 +24,7 @@ import {
   HttpMethod,
   Namespace,
   OCPP1_6_Namespace,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
 } from '@citrineos/base';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { UpsertTariffRequest } from './model/tariffs.js';
@@ -63,7 +63,7 @@ export class TransactionsDataApi
     );
   }
 
-  @AsDataEndpoint(OCPP2_0_1_Namespace.Tariff, HttpMethod.Put, TenantQuerySchema, TariffSchema)
+  @AsDataEndpoint(OCPP2_Namespace.Tariff, HttpMethod.Put, TenantQuerySchema, TariffSchema)
   async upsertTariff(
     request: FastifyRequest<{
       Body: any;
@@ -74,7 +74,7 @@ export class TransactionsDataApi
     return await this._module.tariffRepository.upsertTariff(request.query.tenantId, tariff);
   }
 
-  @AsDataEndpoint(OCPP2_0_1_Namespace.Tariff, HttpMethod.Get, TariffQuerySchema)
+  @AsDataEndpoint(OCPP2_Namespace.Tariff, HttpMethod.Get, TariffQuerySchema)
   getTariffs(request: FastifyRequest<{ Querystring: TariffQueryString }>): Promise<Tariff[]> {
     return this._module.tariffRepository.readAllByQuerystring(
       request.query.tenantId,
@@ -82,13 +82,13 @@ export class TransactionsDataApi
     );
   }
 
-  @AsDataEndpoint(OCPP2_0_1_Namespace.Tariff, HttpMethod.Delete, TariffQuerySchema)
+  @AsDataEndpoint(OCPP2_Namespace.Tariff, HttpMethod.Delete, TariffQuerySchema)
   deleteTariffs(request: FastifyRequest<{ Querystring: TariffQueryString }>): Promise<string> {
     return this._module.tariffRepository
       .deleteAllByQuerystring(request.query.tenantId, request.query)
       .then(
         (deletedCount: { toString: () => string }) =>
-          deletedCount.toString() + ' rows successfully deleted from ' + OCPP2_0_1_Namespace.Tariff,
+          deletedCount.toString() + ' rows successfully deleted from ' + OCPP2_Namespace.Tariff,
       );
   }
 
@@ -99,7 +99,7 @@ export class TransactionsDataApi
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = this._module.config.modules.transactions.endpointPrefix;
     return super._toDataPath(input, endpointPrefix);
   }

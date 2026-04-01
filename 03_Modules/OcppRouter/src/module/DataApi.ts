@@ -18,7 +18,7 @@ import {
   Namespace,
   NotFoundError,
   OCPP1_6_Namespace,
-  OCPP2_0_1_Namespace,
+  OCPP2_Namespace,
   UnauthorizedError,
 } from '@citrineos/base';
 import type {
@@ -98,7 +98,7 @@ export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdmi
    * @return {Promise<number>} The id of the created subscription.
    */
   @AsDataEndpoint(
-    OCPP2_0_1_Namespace.Subscription,
+    OCPP2_Namespace.Subscription,
     HttpMethod.Post,
     TenantQuerySchema,
     CreateSubscriptionSchema,
@@ -123,7 +123,7 @@ export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdmi
       .then((subscription) => subscription?.id);
   }
 
-  @AsDataEndpoint(OCPP2_0_1_Namespace.Subscription, HttpMethod.Get, ChargingStationKeyQuerySchema)
+  @AsDataEndpoint(OCPP2_Namespace.Subscription, HttpMethod.Get, ChargingStationKeyQuerySchema)
   async getSubscriptionsByChargingStation(
     request: FastifyRequest<{ Querystring: ChargingStationKeyQuerystring }>,
   ): Promise<Subscription[]> {
@@ -133,7 +133,7 @@ export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdmi
     );
   }
 
-  @AsDataEndpoint(OCPP2_0_1_Namespace.Subscription, HttpMethod.Delete, ModelKeyQuerystringSchema)
+  @AsDataEndpoint(OCPP2_Namespace.Subscription, HttpMethod.Delete, ModelKeyQuerystringSchema)
   async deleteSubscriptionById(
     request: FastifyRequest<{ Querystring: ModelKeyQuerystring }>,
   ): Promise<boolean> {
@@ -336,7 +336,7 @@ export class AdminApi extends AbstractModuleApi<IMessageRouter> implements IAdmi
    * @param {Namespace} input - The input {@link Namespace}.
    * @return {string} - The generated URL path.
    */
-  protected _toDataPath(input: OCPP2_0_1_Namespace | OCPP1_6_Namespace | Namespace): string {
+  protected _toDataPath(input: OCPP2_Namespace | OCPP1_6_Namespace | Namespace): string {
     const endpointPrefix = '/ocpprouter';
     return super._toDataPath(input, endpointPrefix);
   }

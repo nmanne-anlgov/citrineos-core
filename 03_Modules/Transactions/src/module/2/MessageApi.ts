@@ -6,21 +6,24 @@ import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';
 import type { ITransactionsModuleApi } from '../interface.js';
 import { TransactionsModule } from '../module.js';
-import type { CallAction, IMessageConfirmation } from '@citrineos/base';
+import type { CallAction, IMessageConfirmation, OCPP2_request_types } from '@citrineos/base';
 import {
   AbstractModuleApi,
   AsMessageEndpoint,
   DEFAULT_TENANT_ID,
-  OCPP2_0_1,
+  getOcpp2Schema,
   OCPP_CallAction,
   OCPPVersion,
 } from '@citrineos/base';
+import { packageGroupCall } from '@citrineos/util';
 import type { FastifyInstance } from 'fastify';
+
+const DEFAULT_VERSION = OCPPVersion.OCPP2_0_1;
 
 /**
  * Server API for the transaction module.
  */
-export class TransactionsOcpp201Api
+export class TransactionsOcpp2Api
   extends AbstractModuleApi<TransactionsModule>
   implements ITransactionsModuleApi
 {
@@ -34,52 +37,56 @@ export class TransactionsOcpp201Api
   constructor(
     transactionModule: TransactionsModule,
     server: FastifyInstance,
+    version: OCPPVersion = DEFAULT_VERSION,
     logger?: Logger<ILogObj>,
   ) {
-    super(transactionModule, server, OCPPVersion.OCPP2_0_1, logger);
+    super(transactionModule, server, version, logger);
   }
 
-  @AsMessageEndpoint(OCPP_CallAction.CostUpdated, OCPP2_0_1.CostUpdatedRequestSchema)
+  @AsMessageEndpoint(OCPP_CallAction.CostUpdated, (instance: TransactionsOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'CostUpdatedRequestSchema',
+    ),
+  )
   async costUpdated(
     identifier: string[],
-    request: OCPP2_0_1.CostUpdatedRequest,
+    request: OCPP2_request_types.CostUpdatedRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.CostUpdated,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.CostUpdated,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
-  @AsMessageEndpoint(
-    OCPP_CallAction.GetTransactionStatus,
-    OCPP2_0_1.GetTransactionStatusRequestSchema,
+  @AsMessageEndpoint(OCPP_CallAction.GetTransactionStatus, (instance: TransactionsOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'GetTransactionStatusRequestSchema',
+    ),
   )
   getTransactionStatus(
     identifier: string[],
-    request: OCPP2_0_1.GetTransactionStatusRequest,
+    request: OCPP2_request_types.GetTransactionStatusRequest,
     callbackUrl?: string,
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
-    const results = identifier.map((id) =>
-      this._module.sendCall(
-        id,
-        tenantId,
-        OCPPVersion.OCPP2_0_1,
-        OCPP_CallAction.GetTransactionStatus,
-        request,
-        callbackUrl,
-      ),
+    return packageGroupCall(
+      this._module.sendCall,
+      identifier,
+      tenantId,
+      this._ocppVersion ?? DEFAULT_VERSION,
+      OCPP_CallAction.GetTransactionStatus,
+      request,
+      callbackUrl,
     );
-    return Promise.all(results);
   }
 
   /**

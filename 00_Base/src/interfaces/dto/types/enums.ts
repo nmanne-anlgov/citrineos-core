@@ -12,6 +12,8 @@ export const AsyncJobNameSchema = z.enum(['FETCH_OCPI_TOKENS']);
 
 export const AsyncJobActionSchema = z.enum(['RESUME', 'STOP']);
 
+export const AttributeEnumSchema = z.enum(['Actual', 'Target', 'MinSet', 'MaxSet']);
+
 export const AuthorizationStatusEnumSchema = z.enum([
   'Accepted',
   'Blocked',
@@ -27,12 +29,19 @@ export const AuthorizationStatusEnumSchema = z.enum([
 
 export const AuthorizationWhitelistEnumSchema = z.enum(['Never', 'Allowed', 'AllowedOffline']);
 
+export const CertificateSigningUseEnumSchema = z.enum([
+  'ChargingStationCertificate',
+  'V2GCertificate',
+  'V2G20Certificate',
+]);
+
 export const CertificateUseEnumSchema = z.enum([
   'V2GRootCertificate',
   'MORootCertificate',
   'CSMSRootCertificate',
   'V2GCertificateChain',
   'ManufacturerRootCertificate',
+  'OEMRootCertificate',
 ]);
 
 export const ChargingLimitSourceEnumSchema = z.enum(['EMS', 'Other', 'SO', 'CSO']);
@@ -180,6 +189,27 @@ export const ConnectorTypeEnumSchema = z.enum([
   'TeslaS',
 ]);
 
+export const DataEnumSchema = z.enum([
+  'string',
+  'decimal',
+  'integer',
+  'dateTime',
+  'boolean',
+  'OptionList',
+  'SequenceList',
+  'MemberList',
+  'passwordString',
+]);
+
+export const DataTransferEnumSchema = z.enum([
+  'Accepted',
+  'Rejected',
+  'UnknownMessageId',
+  'UnknownVendorId',
+]);
+
+export const DeleteCertificateStatusEnumSchema = z.enum(['Accepted', 'Failed', 'NotFound']);
+
 export const EventNotificationEnumSchema = z.enum([
   'HardWiredNotification',
   'HardWiredMonitor',
@@ -215,6 +245,18 @@ export const IdTokenEnumSchema = z.enum([
   'NoAuthorization',
   'Other',
 ]);
+
+export const InstallCertificateStatusEnumSchema = z.enum(['Accepted', 'Rejected', 'Failed']);
+
+export const InstallCertificateUseEnumSchema = z.enum([
+  'V2GRootCertificate',
+  'MORootCertificate',
+  'ManufacturerRootCertificate',
+  'CSMSRootCertificate',
+  'OEMRootCertificate',
+]);
+
+export const Iso15118EVCertificateStatusEnumSchema = z.enum(['Accepted', 'Failed']);
 
 export const LocationEnumSchema = z.enum(['Body', 'Cable', 'EV', 'Inlet', 'Outlet']);
 
@@ -294,6 +336,12 @@ export const MeasurandEnumSchema = z.enum([
   'Voltage',
 ]);
 
+export const MonitoringCriterionEnumSchema = z.enum([
+  'ThresholdMonitoring',
+  'DeltaMonitoring',
+  'PeriodicMonitoring',
+]);
+
 export const OCPIVersionNumberSchema = z.enum(['2.2.1']);
 
 export const OCPPInterfaceEnumSchema = z.enum([
@@ -359,6 +407,19 @@ export const ReasonEnumSchema = z.enum([
 
 export const RecurrencyKindEnumSchema = z.enum(['Daily', 'Weekly']);
 
+export const RegistrationStatusEnumSchema = z.enum(['Accepted', 'Pending', 'Rejected']);
+
+export const ReservationUpdateStatusEnumSchema = z.enum(['Expired', 'Removed', 'NoTransaction']);
+
+export const SetVariableStatusEnumSchema = z.enum([
+  'Accepted',
+  'Rejected',
+  'UnknownComponent',
+  'UnknownVariable',
+  'NotSupportedAttributeType',
+  'RebootRequired',
+]);
+
 export const TransactionEventEnumSchema = z.enum(['Ended', 'Started', 'Updated']);
 
 export const TriggerReasonEnumSchema = z.enum([
@@ -385,14 +446,18 @@ export const TriggerReasonEnumSchema = z.enum([
   'ResetCommand',
 ]);
 
+export const UpdateEnumSchema = z.enum(['Differential', 'Full']);
+
 // ============================================================================
 // Enum Exports
 // ============================================================================
 
 export const AsyncJobNameEnum = AsyncJobNameSchema.enum;
 export const AsyncJobActionEnum = AsyncJobActionSchema.enum;
+export const AttributeEnum = AttributeEnumSchema.enum;
 export const AuthorizationStatusEnum = AuthorizationStatusEnumSchema.enum;
 export const AuthorizationWhitelistEnum = AuthorizationWhitelistEnumSchema.enum;
+export const CertificateSigningUseEnum = CertificateSigningUseEnumSchema.enum;
 export const CertificateUseEnum = CertificateUseEnumSchema.enum;
 export const ChargingStateEnum = ChargingStateEnumSchema.enum;
 export const ChargingStationCapabilityEnum = ChargingStationCapabilitySchema.enum;
@@ -408,11 +473,17 @@ export const ChargingProfilePurposeEnum = ChargingProfilePurposeEnumSchema.enum;
 export const ChargingRateUnitEnum = ChargingRateUnitEnumSchema.enum;
 export const ChargingLimitSourceEnum = ChargingLimitSourceEnumSchema.enum;
 export const CostKindEnum = CostKindEnumSchema.enum;
+export const DataEnum = DataEnumSchema.enum;
+export const DataTransferEnum = DataTransferEnumSchema.enum;
+export const DeleteCertificateStatusEnum = DeleteCertificateStatusEnumSchema.enum;
 export const EnergyTransferModeEnum = EnergyTransferModeEnumSchema.enum;
 export const EventNotificationEnum = EventNotificationEnumSchema.enum;
 export const EventTriggerEnum = EventTriggerEnumSchema.enum;
 export const HashAlgorithmEnum = HashAlgorithmEnumSchema.enum;
 export const IdTokenEnum = IdTokenEnumSchema.enum;
+export const InstallCertificateStatusEnum = InstallCertificateStatusEnumSchema.enum;
+export const InstallCertificateUseEnum = InstallCertificateUseEnumSchema.enum;
+export const Iso15118EVCertificateStatusEnum = Iso15118EVCertificateStatusEnumSchema.enum;
 export const LocationEnum = LocationEnumSchema.enum;
 export const LocationFacilityEnum = LocationFacilityEnumSchema.enum;
 export const LocationParkingEnum = LocationParkingEnumSchema.enum;
@@ -421,6 +492,7 @@ export const MessageFormatEnum = MessageFormatEnumSchema.enum;
 export const MonitorEnum = MonitorEnumSchema.enum;
 export const MessagePriorityEnum = MessagePriorityEnumSchema.enum;
 export const MessageStateEnum = MessageStateEnumSchema.enum;
+export const MonitoringCriterionEnum = MonitoringCriterionEnumSchema.enum;
 export const OCPIVersionNumberEnum = OCPIVersionNumberSchema.enum;
 export const OCPPInterfaceEnum = OCPPInterfaceEnumSchema.enum;
 export const OCPPTransportEnum = OCPPTransportEnumSchema.enum;
@@ -429,8 +501,12 @@ export const PhaseEnum = PhaseEnumSchema.enum;
 export const ReadingContextEnum = ReadingContextEnumSchema.enum;
 export const RecurrencyKindEnum = RecurrencyKindEnumSchema.enum;
 export const ReasonEnum = ReasonEnumSchema.enum;
+export const RegistrationStatusEnum = RegistrationStatusEnumSchema.enum;
+export const ReservationUpdateStatusEnum = ReservationUpdateStatusEnumSchema.enum;
+export const SetVariableStatusEnum = SetVariableStatusEnumSchema.enum;
 export const TransactionEventEnum = TransactionEventEnumSchema.enum;
 export const TriggerReasonEnum = TriggerReasonEnumSchema.enum;
+export const UpdateEnum = UpdateEnumSchema.enum;
 
 // ============================================================================
 // Type Exports
@@ -438,8 +514,10 @@ export const TriggerReasonEnum = TriggerReasonEnumSchema.enum;
 
 export type AsyncJobNameEnumType = z.infer<typeof AsyncJobNameSchema>;
 export type AsyncJobActionEnumType = z.infer<typeof AsyncJobActionSchema>;
+export type AttributeEnumType = z.infer<typeof AttributeEnumSchema>;
 export type AuthorizationStatusEnumType = z.infer<typeof AuthorizationStatusEnumSchema>;
 export type AuthorizationWhitelistEnumType = z.infer<typeof AuthorizationWhitelistEnumSchema>;
+export type CertificateSigningUseEnumType = z.infer<typeof CertificateSigningUseEnumSchema>;
 export type CertificateUseEnumType = z.infer<typeof CertificateUseEnumSchema>;
 export type ChargingStateEnumType = z.infer<typeof ChargingStateEnumSchema>;
 export type ChargingStationCapabilityEnumType = z.infer<typeof ChargingStationCapabilitySchema>;
@@ -457,11 +535,19 @@ export type ChargingProfilePurposeEnumType = z.infer<typeof ChargingProfilePurpo
 export type ChargingRateUnitEnumType = z.infer<typeof ChargingRateUnitEnumSchema>;
 export type ChargingLimitSourceEnumType = z.infer<typeof ChargingLimitSourceEnumSchema>;
 export type CostKindEnumType = z.infer<typeof CostKindEnumSchema>;
+export type DataEnumType = z.infer<typeof DataEnumSchema>;
+export type DataTransferEnumType = z.infer<typeof DataTransferEnumSchema>;
+export type DeleteCertificateStatusEnumType = z.infer<typeof DeleteCertificateStatusEnumSchema>;
 export type EnergyTransferModeEnumType = z.infer<typeof EnergyTransferModeEnumSchema>;
 export type EventTriggerEnumType = z.infer<typeof EventTriggerEnumSchema>;
 export type EventNotificationEnumType = z.infer<typeof EventNotificationEnumSchema>;
 export type HashAlgorithmEnumType = z.infer<typeof HashAlgorithmEnumSchema>;
 export type IdTokenEnumType = z.infer<typeof IdTokenEnumSchema>;
+export type InstallCertificateStatusEnumType = z.infer<typeof InstallCertificateStatusEnumSchema>;
+export type InstallCertificateUseEnumType = z.infer<typeof InstallCertificateUseEnumSchema>;
+export type Iso15118EVCertificateStatusEnumType = z.infer<
+  typeof Iso15118EVCertificateStatusEnumSchema
+>;
 export type LocationEnumType = z.infer<typeof LocationEnumSchema>;
 export type LocationFacilityEnumType = z.infer<typeof LocationFacilityEnumSchema>;
 export type LocationParkingEnumType = z.infer<typeof LocationParkingEnumSchema>;
@@ -470,6 +556,7 @@ export type MessageFormatEnumType = z.infer<typeof MessageFormatEnumSchema>;
 export type MonitorEnumType = z.infer<typeof MonitorEnumSchema>;
 export type MessagePriorityEnumType = z.infer<typeof MessagePriorityEnumSchema>;
 export type MessageStateEnumType = z.infer<typeof MessageStateEnumSchema>;
+export type MonitoringCriterionEnumType = z.infer<typeof MonitoringCriterionEnumSchema>;
 export type OCPIVersionNumberEnumType = z.infer<typeof OCPIVersionNumberSchema>;
 export type OCPPInterfaceEnumType = z.infer<typeof OCPPInterfaceEnumSchema>;
 export type OCPPTransportEnumType = z.infer<typeof OCPPTransportEnumSchema>;
@@ -478,5 +565,9 @@ export type PhaseEnumType = z.infer<typeof PhaseEnumSchema>;
 export type ReadingContextEnumType = z.infer<typeof ReadingContextEnumSchema>;
 export type ReasonEnumType = z.infer<typeof ReasonEnumSchema>;
 export type RecurrencyKindEnumType = z.infer<typeof RecurrencyKindEnumSchema>;
+export type RegistrationStatusEnumType = z.infer<typeof RegistrationStatusEnumSchema>;
+export type ReservationUpdateStatusEnumType = z.infer<typeof ReservationUpdateStatusEnumSchema>;
+export type SetVariableStatusEnumType = z.infer<typeof SetVariableStatusEnumSchema>;
 export type TransactionEventEnumType = z.infer<typeof TransactionEventEnumSchema>;
 export type TriggerReasonEnumType = z.infer<typeof TriggerReasonEnumSchema>;
+export type UpdateEnumType = z.infer<typeof UpdateEnumSchema>;

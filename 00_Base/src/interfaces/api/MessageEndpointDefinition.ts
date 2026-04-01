@@ -11,6 +11,6 @@ export interface IMessageEndpointDefinition {
   action: CallAction;
   method: (...args: any[]) => any;
   methodName: string;
-  bodySchema: object;
+  bodySchema: object | ((instance: any) => object);
   optionalQuerystrings?: Record<string, any>;
 }

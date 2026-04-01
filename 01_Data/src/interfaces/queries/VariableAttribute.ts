@@ -2,14 +2,19 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-import { DEFAULT_TENANT_ID, OCPP2_0_1, QuerySchema } from '@citrineos/base';
+import {
+  DEFAULT_TENANT_ID,
+  QuerySchema,
+  type AttributeEnumType,
+  type SetVariableStatusEnumType,
+} from '@citrineos/base';
 
 export interface VariableAttributeQuerystring {
   stationId: string;
   tenantId: number;
-  type?: OCPP2_0_1.AttributeEnumType;
+  type?: AttributeEnumType;
   value?: string;
-  status?: OCPP2_0_1.SetVariableStatusEnumType;
+  status?: SetVariableStatusEnumType;
   component_evse_id?: number;
   component_evse_connectorId?: number | null;
   component_name?: string;
