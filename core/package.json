@@ -39,7 +39,7 @@
     "tslog": "^4.9.2"
   },
   "devDependencies": {
-    "@types/amqplib": "0.10.4",
+    "@types/amqplib": "0.10.8",
     "@types/bcryptjs": "2.4.6",
     "@types/jsonwebtoken": "9.0.5",
     "@types/node-cron": "3.0.11",
