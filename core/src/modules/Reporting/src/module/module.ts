@@ -30,6 +30,7 @@ import {
   OCPPValidator,
   OCPPVersion,
   SetVariableStatusEnum,
+  OCPP2_1,
 } from '@citrineos/base';
 import type {
   IDeviceModelRepository,

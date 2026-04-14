@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import type { ISmartCharging } from './SmartCharging.js';
 import { ChargingProfilePurposeEnum, OCPP2_0_1, OCPP2_1 } from '@citrineos/base';
-import type { IChargingProfileRepository } from '@citrineos/data';
+import type { IChargingProfileRepository } from '@dal/interfaces/repositories.js';
 import {
   ChargingProfile,
   ChargingSchedule,

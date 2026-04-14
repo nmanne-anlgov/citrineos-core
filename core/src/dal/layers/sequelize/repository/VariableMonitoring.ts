@@ -15,22 +15,7 @@ import type {
   OCPP2_common_types,
   SetMonitoringStatusEnumType,
 } from '@citrineos/base';
-import {
-  Component,
-  EventData,
-  Variable,
-  VariableMonitoring,
-  VariableMonitoringStatus,
-} from '../model/index.js';
-import type { IVariableMonitoringRepository } from '../../../interfaces/index.js';
-import type { BootstrapConfig, CallAction } from '@citrineos/base';
-import {
-  CrudRepository,
-  OCPP2_0_1,
-  OCPP2_1,
-  OCPP2_common_types,
-  OCPP_CallAction,
-} from '@citrineos/base';
+import { CrudRepository, OCPP2_0_1, OCPP_CallAction } from '@citrineos/base';
 import { Sequelize } from 'sequelize-typescript';
 import type { ILogObj } from 'tslog';
 import { Logger } from 'tslog';

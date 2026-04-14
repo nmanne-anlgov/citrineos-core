@@ -34,6 +34,7 @@ import {
   OCPP_CallAction,
   OCPPVersion,
   MessageOrigin,
+  OCPP2_1,
 } from '@citrineos/base';
 import type {
   IChargingProfileRepository,
@@ -179,7 +180,7 @@ export class SmartChargingModule extends AbstractModule {
     const request = message.payload;
     const tenantId = message.context.tenantId;
     const stationId = message.context.stationId;
-    const givenNeeds: OCPP2_common_types.ChargingNeedsType = request.chargingNeeds;
+    const givenNeeds: OCPP2_1.ChargingNeedsType = request.chargingNeeds;
 
     const activeTransaction =
       await this._transactionEventRepository.getActiveTransactionByStationIdAndEvseId(
@@ -195,7 +196,7 @@ export class SmartChargingModule extends AbstractModule {
     const hasChargingParameters =
       givenNeeds.dcChargingParameters != null ||
       givenNeeds.acChargingParameters != null ||
-      givenNeeds.v2xChargingParameters != null;
+      givenNeeds?.v2xChargingParameters != null;
     this._logger.info(`Has charging parameters: ${hasChargingParameters}`);
 
     const isBptMode = [
@@ -211,7 +212,7 @@ export class SmartChargingModule extends AbstractModule {
       ((givenNeeds.acChargingParameters ?? false) &&
         givenNeeds.requestedEnergyTransfer !== EnergyTransferModeEnum.DC &&
         !isBptMode) ||
-      (isBptMode && givenNeeds.v2xChargingParameters != null);
+      (isBptMode && givenNeeds?.v2xChargingParameters != null);
     this._logger.info(
       `Matched chargingParameters and requestedEnergyTransfer type: ${matchedChargingType}`,
     );

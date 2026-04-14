@@ -44,6 +44,7 @@ import {
   ReservationUpdateStatusEnum,
   ReserveNowStatusEnum,
   SendLocalListStatusEnum,
+  OCPP2_1,
 } from '@citrineos/base';
 import type {
   IAuthorizationRepository,
