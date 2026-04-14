@@ -71,6 +71,8 @@ export class InternalSmartCharging implements ISmartCharging {
     let numberPhases: number | undefined;
     let minChargingRate: number | undefined;
     let dischargeLimit: number | undefined;
+    let setpoint: number | undefined;
+    let operationMode: OCPP2_1.OperationModeEnumType | undefined;
     let chargingRateUnit: OCPP2_1.ChargingRateUnitEnumType = OCPP2_1.ChargingRateUnitEnumType.A;
     // Determine charging parameters based on energy transfer mode
     switch (transferMode) {
@@ -108,6 +110,8 @@ export class InternalSmartCharging implements ISmartCharging {
           chargingRateUnit = OCPP2_1.ChargingRateUnitEnumType.W;
           limit = v2xParams.maxChargePower ?? 0;
           dischargeLimit = v2xParams.maxDischargePower ? -v2xParams.maxDischargePower : undefined;
+          setpoint = v2xParams.maxChargePower ?? 0;
+          operationMode = OCPP2_1.OperationModeEnumType.CentralSetpoint;
         }
         break;
       }
@@ -119,6 +123,8 @@ export class InternalSmartCharging implements ISmartCharging {
           chargingRateUnit = OCPP2_1.ChargingRateUnitEnumType.W;
           limit = v2xParams.maxChargePower ?? 0;
           dischargeLimit = v2xParams.maxDischargePower ? -v2xParams.maxDischargePower : undefined;
+          setpoint = v2xParams.maxChargePower ?? 0;
+          operationMode = OCPP2_1.OperationModeEnumType.CentralSetpoint;
         }
         break;
       }
@@ -144,6 +150,8 @@ export class InternalSmartCharging implements ISmartCharging {
         limit,
         numberPhases,
         dischargeLimit,
+        setpoint,
+        operationMode,
       },
     ];
 

@@ -263,7 +263,7 @@ export class SmartChargingModule extends AbstractModule {
     await this.sendCall(
       stationId,
       message.context.tenantId,
-      OCPPVersion.OCPP2_1,
+      message.protocol,
       OCPP_CallAction.SetChargingProfile,
       { evseId: request.evseId, chargingProfile } as OCPP2_request_types.SetChargingProfileRequest,
     );

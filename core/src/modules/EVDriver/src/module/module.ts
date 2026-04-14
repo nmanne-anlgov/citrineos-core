@@ -272,7 +272,7 @@ export class EVDriverModule extends AbstractModule {
    * Handle OCPP 2.x requests
    */
 
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.Authorize)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.Authorize)
   protected async _handleAuthorize(
     message: IMessage<OCPP2_request_types.AuthorizeRequest>,
     props?: HandlerProperties,
