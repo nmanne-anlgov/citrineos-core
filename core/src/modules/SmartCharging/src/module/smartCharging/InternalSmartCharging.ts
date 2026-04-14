@@ -187,7 +187,7 @@ export class InternalSmartCharging implements ISmartCharging {
           existingChargingProfile.chargingSchedule[0].chargingSchedulePeriod;
         if (givenChargingPeriods.length === existingChargingPeriods.length) {
           for (let i = 0; i < givenChargingPeriods.length; i++) {
-            if (givenChargingPeriods[i].limit > existingChargingPeriods[i].limit) {
+            if ((givenChargingPeriods[i].limit ?? 0) > existingChargingPeriods[i].limit) {
               throw new Error(
                 `Given limits ${givenChargingPeriods[i].limit} exceeds existing limits ${existingChargingPeriods[i].limit} in charging profile ${existingChargingProfile.databaseId}.`,
               );

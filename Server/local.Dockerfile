@@ -18,6 +18,6 @@ WORKDIR /usr/local/apps/citrineos
 
 RUN npm install --save-dev tsconfig-paths
 
-EXPOSE ${PORT}
+EXPOSE 8888
 
 CMD ["npm", "run", "start-docker"]

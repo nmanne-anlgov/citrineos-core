@@ -19,6 +19,6 @@ WORKDIR /usr/local/apps/citrineos
 
 RUN chmod +x /usr/local/apps/citrineos/entrypoint.sh
 
-EXPOSE ${PORT}
+EXPOSE 8888
 
 ENTRYPOINT ["/usr/local/apps/citrineos/entrypoint.sh"]
