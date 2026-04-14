@@ -16,6 +16,6 @@ COPY --from=build /usr/local/apps/citrineos /usr/local/apps/citrineos
 
 WORKDIR /usr/local/apps/citrineos
 
-EXPOSE ${PORT}
+EXPOSE 8888
 
 CMD ["npm", "run", "start-docker"]

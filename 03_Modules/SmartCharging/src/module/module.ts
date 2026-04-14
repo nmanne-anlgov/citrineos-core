@@ -197,7 +197,7 @@ export class SmartChargingModule extends AbstractModule {
     const hasChargingParameters =
       givenNeeds.dcChargingParameters != null ||
       givenNeeds.acChargingParameters != null ||
-      givenNeeds.v2xChargingParameters != null;
+      givenNeeds?.v2xChargingParameters != null;
     this._logger.info(`Has charging parameters: ${hasChargingParameters}`);
 
     const isBptMode = [
@@ -213,7 +213,7 @@ export class SmartChargingModule extends AbstractModule {
       ((givenNeeds.acChargingParameters ?? false) &&
         givenNeeds.requestedEnergyTransfer !== OCPP2_1.EnergyTransferModeEnumType.DC &&
         !isBptMode) ||
-      (isBptMode && givenNeeds.v2xChargingParameters != null);
+      (isBptMode && givenNeeds?.v2xChargingParameters != null);
     this._logger.info(
       `Matched chargingParameters and requestedEnergyTransfer type: ${matchedChargingType}`,
     );
@@ -264,7 +264,7 @@ export class SmartChargingModule extends AbstractModule {
     await this.sendCall(
       stationId,
       message.context.tenantId,
-      OCPPVersion.OCPP2_1,
+      message.protocol,
       OCPP_CallAction.SetChargingProfile,
       { evseId: request.evseId, chargingProfile } as OCPP2_1.SetChargingProfileRequest,
     );
