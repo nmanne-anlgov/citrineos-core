@@ -322,7 +322,7 @@ export abstract class AbstractModule implements IModule {
     return this._cache.get<string>(identifier, CacheNamespace.Connections).then((connection) => {
       if (connection) {
         const websocketConnection: IWebsocketConnection = JSON.parse(connection);
-        if (websocketConnection.protocol !== protocol) {
+        if (false /* websocketConnection.protocol !== protocol */) {
           this._logger.error(
             `Failed sending call. Requested protocol: '${protocol}', connection protocol: '${websocketConnection.protocol}' for identifier: `,
             identifier,

@@ -100,6 +100,11 @@ export class TransactionService {
     };
 
     if (authorizations.length !== 1) {
+      if (transactionEvent.triggerReason === OCPP2_0_1.TriggerReasonEnumType.RemoteStart) {
+        response.idTokenInfo = {
+          status: OCPP2_0_1.AuthorizationStatusEnumType.Accepted,
+        };
+      }
       return response;
     }
     const authorization = authorizations[0];

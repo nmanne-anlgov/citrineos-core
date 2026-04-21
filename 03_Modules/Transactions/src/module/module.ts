@@ -280,7 +280,7 @@ export class TransactionsModule extends AbstractModule {
    * Handle OCPP 2.0.1 requests
    */
 
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.TransactionEvent)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.TransactionEvent)
   protected async _handleTransactionEvent(
     message: IMessage<OCPP2_0_1.TransactionEventRequest>,
     props?: HandlerProperties,
@@ -428,7 +428,7 @@ export class TransactionsModule extends AbstractModule {
 
   //TODO: Need a transaction event handler for OCPP 2.1 as we need to tweak or extend the transaction service for ocpp 2.1
 
-  @AsHandler([OCPPVersion.OCPP2_0_1], OCPP_CallAction.MeterValues)
+  @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.MeterValues)
   protected async _handleMeterValues(
     message: IMessage<OCPP2_0_1.MeterValuesRequest>,
     props?: HandlerProperties,

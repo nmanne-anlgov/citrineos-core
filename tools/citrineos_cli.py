@@ -699,12 +699,24 @@ def action_set_charging_profile(client: CitrineOSClient):
     print("\n  Charging rate unit:")
     unit = prompt("Unit (W / A)", "W")
 
+    transaction_id = prompt("Transaction ID (required for TxProfile, leave empty to skip)", "")
+
     limit = prompt("Charge limit value (e.g., 11000 for 11kW, or negative for discharge)", "11000")
     num_phases = prompt("Number of phases (1/3, leave empty to skip)", "")
+
+    setpoint_raw = prompt("Setpoint (positive=charge, negative=discharge, leave empty to skip)", "")
+    discharge_limit_raw = prompt("Discharge limit (negative, e.g. -7200, leave empty to skip)", "")
+    operation_mode = prompt("Operation mode (CentralSetpoint/ChargingOnly/leave empty to skip)", "")
 
     period: dict[str, Any] = {"startPeriod": 0, "limit": float(limit)}
     if num_phases:
         period["numberPhases"] = int(num_phases)
+    if setpoint_raw:
+        period["setpoint"] = float(setpoint_raw)
+    if discharge_limit_raw:
+        period["dischargeLimit"] = float(discharge_limit_raw)
+    if operation_mode:
+        period["operationMode"] = operation_mode
 
     from datetime import datetime, timezone
 
@@ -718,6 +730,7 @@ def action_set_charging_profile(client: CitrineOSClient):
         "stackLevel": stack_level,
         "chargingProfilePurpose": purpose,
         "chargingProfileKind": "Absolute",
+        **({"transactionId": transaction_id} if transaction_id else {}),
         "chargingSchedule": [
             {
                 "id": 1,
