@@ -307,6 +307,7 @@ export const OCPP2_1_CALL_SCHEMA_RECORD: Record<string, object> = {
   [OCPP_CallAction.TriggerMessage]: OCPP2_1.TriggerMessageRequestSchema,
   [OCPP_CallAction.UnlockConnector]: OCPP2_1.UnlockConnectorRequestSchema,
   [OCPP_CallAction.UnpublishFirmware]: OCPP2_1.UnpublishFirmwareRequestSchema,
+  [OCPP_CallAction.UpdateDynamicSchedule]: OCPP2_1.UpdateDynamicScheduleRequestSchema,
   [OCPP_CallAction.UpdateFirmware]: OCPP2_1.UpdateFirmwareRequestSchema,
 };
 
@@ -478,6 +479,7 @@ export const OCPP2_1_CALL_RESULT_SCHEMA_RECORD: Record<string, object> = {
   [OCPP_CallAction.TriggerMessage]: OCPP2_1.TriggerMessageResponseSchema,
   [OCPP_CallAction.UnlockConnector]: OCPP2_1.UnlockConnectorResponseSchema,
   [OCPP_CallAction.UnpublishFirmware]: OCPP2_1.UnpublishFirmwareResponseSchema,
+  [OCPP_CallAction.UpdateDynamicSchedule]: OCPP2_1.UpdateDynamicScheduleResponseSchema,
   [OCPP_CallAction.UpdateFirmware]: OCPP2_1.UpdateFirmwareResponseSchema,
 };
 

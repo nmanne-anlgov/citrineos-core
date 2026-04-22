@@ -483,6 +483,20 @@ export class SmartChargingModule extends AbstractModule {
     }
   }
 
+  @AsHandler([OCPPVersion.OCPP2_1], OCPP_CallAction.UpdateDynamicSchedule)
+  protected _handleUpdateDynamicSchedule(
+    message: IMessage<OCPP2_response_types.UpdateDynamicScheduleResponse>,
+    props?: HandlerProperties,
+  ): void {
+    this._logger.debug('UpdateDynamicSchedule response received:', message, props);
+    const response = message.payload;
+    if (response.status === OCPP2_1.ChargingProfileStatusEnumType.Rejected) {
+      this._logger.error(`UpdateDynamicSchedule rejected: ${JSON.stringify(response)}`);
+    } else {
+      this._logger.info(`UpdateDynamicSchedule accepted by ${message.context.stationId}`);
+    }
+  }
+
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.ClearedChargingLimit)
   protected async _handleClearedChargingLimit(
     message: IMessage<OCPP2_request_types.ClearedChargingLimitRequest>,

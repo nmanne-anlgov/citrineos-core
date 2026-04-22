@@ -213,3 +213,5 @@ export type RequestStopTransactionResponse =
   | OCPP2_0_1.RequestStopTransactionResponse;
 
 export type NotifyAllowedEnergyTransferResponse = OCPP2_1.NotifyAllowedEnergyTransferResponse;
+
+export type UpdateDynamicScheduleResponse = OCPP2_1.UpdateDynamicScheduleResponse;

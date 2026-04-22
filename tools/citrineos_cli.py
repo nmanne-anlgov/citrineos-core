@@ -361,6 +361,120 @@ class CitrineOSClient:
             "smartcharging", ocpp_version, "getCompositeSchedule", station_id, body
         )
 
+    def update_dynamic_schedule(
+        self,
+        station_id: str,
+        charging_profile_id: int,
+        schedule_update: dict,
+        ocpp_version: str = "2.1",
+    ) -> dict:
+        body = {
+            "chargingProfileId": charging_profile_id,
+            "scheduleUpdate": schedule_update,
+        }
+        return self._post_message(
+            "smartcharging", ocpp_version, "updateDynamicSchedule", station_id, body
+        )
+
+    # --- Smart helpers (defaults discovery) ---
+
+    def get_first_online_station(self) -> str | None:
+        """Return ID of first online station, or None if none online."""
+        for s in self.list_stations():
+            if s.get("isOnline"):
+                return s["id"]
+        # Fallback to first station if none online
+        stations = self.list_stations()
+        return stations[0]["id"] if stations else None
+
+    def get_latest_active_transaction(self, station_id: str | None = None) -> dict | None:
+        """Return the most recently created active transaction (optionally filtered by station)."""
+        txns = self.list_transactions(station_id)
+        active = [t for t in txns if t.get("isActive")]
+        if not active:
+            return None
+        active.sort(key=lambda t: t.get("createdAt", ""), reverse=True)
+        return active[0]
+
+    def get_charging_profile_db_id(
+        self, station_id: str, transaction_id: str | None = None
+    ) -> int | None:
+        """Find the most recent dynamic-capable profile id (one whose schedule periods
+        include operationMode like CentralSetpoint/ExternalSetpoint).
+        UpdateDynamicSchedule rejects profiles without a setpoint-supporting operationMode
+        ("ChargingSchedulePeriodUnsupportedLimitSetpoint").
+        Falls back to the latest active profile if no dynamic-capable profile is found.
+        """
+        # Try to find profiles whose periods have a setpoint-capable operationMode.
+        # The exact GraphQL relation/field names depend on Hasura introspection; try a few.
+        candidate_queries = [
+            # Try ChargingSchedules -> ChargingSchedulePeriods (typical pluralization)
+            """
+            query ($s: String!) {
+              ChargingProfiles(
+                where: {
+                  stationId: {_eq: $s},
+                  ChargingSchedules: {ChargingSchedulePeriods: {operationMode: {_in: ["CentralSetpoint","ExternalSetpoint"]}}}
+                },
+                order_by: {id: desc},
+                limit: 1
+              ) { id }
+            }
+            """,
+            # Singular variant
+            """
+            query ($s: String!) {
+              ChargingProfiles(
+                where: {
+                  stationId: {_eq: $s},
+                  ChargingSchedule: {ChargingSchedulePeriod: {operationMode: {_in: ["CentralSetpoint","ExternalSetpoint"]}}}
+                },
+                order_by: {id: desc},
+                limit: 1
+              ) { id }
+            }
+            """,
+        ]
+        for q in candidate_queries:
+            try:
+                rows = self._graphql(q, {"s": station_id})["ChargingProfiles"]
+                if rows:
+                    return rows[0]["id"]
+            except Exception:
+                continue
+
+        # Fallback: latest active profile (may not be dynamic-capable)
+        if transaction_id:
+            query = """
+            query ($stationId: String!, $txId: String!) {
+              ChargingProfiles(
+                where: {
+                  stationId: {_eq: $stationId},
+                  isActive: {_eq: true},
+                  Transaction: {transactionId: {_eq: $txId}}
+                },
+                order_by: {id: desc},
+                limit: 1
+              ) { id }
+            }
+            """
+            try:
+                rows = self._graphql(
+                    query, {"stationId": station_id, "txId": transaction_id}
+                )["ChargingProfiles"]
+                if rows:
+                    return rows[0]["id"]
+            except Exception:
+                pass
+        try:
+            rows = self._graphql(
+                """query ($s: String!) { ChargingProfiles(where: {stationId:{_eq:$s}, isActive:{_eq:true}}, order_by:{id:desc}, limit:1) { id } }""",
+                {"s": station_id},
+            )["ChargingProfiles"]
+            return rows[0]["id"] if rows else None
+        except Exception:
+            return None
+
 
 # --- Display helpers ---
 
@@ -413,15 +527,20 @@ def pick_station(client: CitrineOSClient) -> str | None:
     if not stations:
         print("  No charging stations found.")
         return None
+    # Default to first online station
+    default_idx = next(
+        (i + 1 for i, s in enumerate(stations) if s.get("isOnline")), 1
+    )
     print()
     for i, s in enumerate(stations):
         online = "ONLINE " if s.get("isOnline") else "OFFLINE"
         proto = s.get("protocol") or "?"
         vendor = s.get("chargePointVendor") or ""
         model = s.get("chargePointModel") or ""
-        print(f"  [{i + 1}] {s['id']}  ({online}, {proto}) {vendor} {model}")
+        marker = " <- default" if (i + 1) == default_idx else ""
+        print(f"  [{i + 1}] {s['id']}  ({online}, {proto}) {vendor} {model}{marker}")
     print(f"  [0] Enter station ID manually")
-    choice = prompt("Select station", "1")
+    choice = prompt("Select station", str(default_idx))
     if choice == "0":
         return prompt("Station ID")
     idx = int(choice) - 1
@@ -432,8 +551,31 @@ def pick_station(client: CitrineOSClient) -> str | None:
 
 
 def pick_version() -> str:
-    v = prompt("OCPP version (2.0.1 / 2.1 / 1.6)", "2.0.1")
+    v = prompt("OCPP version (2.0.1 / 2.1 / 1.6)", "2.1")
     return v
+
+
+def pick_active_transaction(client: CitrineOSClient, station_id: str) -> str | None:
+    """Show active transactions and let user pick one. Returns transactionId."""
+    txns = client.list_transactions(station_id)
+    active = [t for t in txns if t.get("isActive")]
+    if not active:
+        manual = prompt("No active transactions found. Enter transactionId manually (or empty to skip)", "")
+        return manual or None
+    if len(active) == 1:
+        tx_id = active[0]["transactionId"]
+        print(f"  Auto-selected active transaction: {tx_id}")
+        return tx_id
+    # Multiple active -- show and pick latest as default
+    active.sort(key=lambda t: t.get("createdAt", ""), reverse=True)
+    print("\n  Active transactions (newest first):")
+    for i, t in enumerate(active):
+        print(f"    [{i + 1}] {t['transactionId']}  ({t.get('chargingState','?')}, since {t.get('createdAt','?')})")
+    choice = prompt("Select transaction", "1")
+    idx = int(choice) - 1
+    if 0 <= idx < len(active):
+        return active[idx]["transactionId"]
+    return None
 
 
 # --- Menu actions ---
@@ -502,16 +644,10 @@ def action_remote_stop(client: CitrineOSClient):
     if not station_id:
         return
     version = pick_version()
-
-    # Show active transactions for this station
-    txns = client.list_transactions(station_id)
-    active = [t for t in txns if t.get("isActive")]
-    if active:
-        print("\n  Active transactions:")
-        for t in active:
-            print(f"    - {t['transactionId']} (since {t.get('createdAt', '?')})")
-
-    tx_id = prompt("Transaction ID to stop")
+    tx_id = pick_active_transaction(client, station_id)
+    if not tx_id:
+        print("  No transaction selected.")
+        return
     print("\n  Sending RequestStopTransaction...")
     try:
         result = client.request_stop_transaction(station_id, tx_id, version)
@@ -681,32 +817,41 @@ def action_set_charging_profile(client: CitrineOSClient):
     version = pick_version()
     evse_id = prompt_int("EVSE ID", 1)
 
-    print("\n  Charging profile purpose:")
-    purposes = [
-        "ChargingStationExternalConstraints",
-        "ChargingStationMaxProfile",
-        "TxDefaultProfile",
-        "TxProfile",
-    ]
-    for i, p in enumerate(purposes):
-        print(f"    [{i + 1}] {p}")
-    p_choice = prompt("Select purpose", "4")
-    purpose = purposes[int(p_choice) - 1] if p_choice.isdigit() and 1 <= int(p_choice) <= len(purposes) else p_choice
+    purpose = prompt("Purpose (TxProfile/TxDefaultProfile/ChargingStationMaxProfile)", "TxProfile")
 
-    profile_id = prompt_int("Charging profile ID", 1)
-    stack_level = prompt_int("Stack level", 0)
+    # Auto-fetch latest active transaction for TxProfile
+    transaction_id = ""
+    if purpose == "TxProfile":
+        active_tx = client.get_latest_active_transaction(station_id)
+        if active_tx:
+            tx_default = active_tx["transactionId"]
+            print(f"  Latest active transaction: {tx_default}")
+            transaction_id = prompt("Transaction ID", tx_default)
+        else:
+            transaction_id = prompt("Transaction ID (no active transaction found)", "")
 
-    print("\n  Charging rate unit:")
-    unit = prompt("Unit (W / A)", "W")
+    # Auto-increment profile_id and stack_level if a profile already exists
+    next_profile_id = 1
+    next_stack = 0
+    try:
+        existing = client._graphql(
+            """query ($s: String!) { ChargingProfiles(where: {stationId:{_eq:$s}}, order_by:{id:desc}, limit:1) { id stackLevel } }""",
+            {"s": station_id},
+        )["ChargingProfiles"]
+        if existing:
+            next_profile_id = (existing[0]["id"] or 0) + 1
+            next_stack = (existing[0]["stackLevel"] or 0) + 1
+    except Exception:
+        pass
 
-    transaction_id = prompt("Transaction ID (required for TxProfile, leave empty to skip)", "")
-
-    limit = prompt("Charge limit value (e.g., 11000 for 11kW, or negative for discharge)", "11000")
-    num_phases = prompt("Number of phases (1/3, leave empty to skip)", "")
-
-    setpoint_raw = prompt("Setpoint (positive=charge, negative=discharge, leave empty to skip)", "")
-    discharge_limit_raw = prompt("Discharge limit (negative, e.g. -7200, leave empty to skip)", "")
-    operation_mode = prompt("Operation mode (CentralSetpoint/ChargingOnly/leave empty to skip)", "")
+    profile_id = prompt_int("Charging profile ID", next_profile_id)
+    stack_level = prompt_int("Stack level (must be unique per tx)", next_stack)
+    unit = prompt("Charging rate unit (W / A)", "W")
+    operation_mode = prompt("Operation mode (CentralSetpoint=dynamic / ChargingOnly / empty)", "CentralSetpoint")
+    setpoint_raw = prompt("Setpoint (positive=charge, negative=discharge, empty=skip)", "7200")
+    limit = prompt("Limit (max charge rate, always positive)", "11000")
+    discharge_limit_raw = prompt("Discharge limit (negative, e.g. -11000, empty=skip)", "-11000")
+    num_phases = prompt("Number of phases (1/3, empty=skip)", "")
 
     period: dict[str, Any] = {"startPeriod": 0, "limit": float(limit)}
     if num_phases:
@@ -720,10 +865,7 @@ def action_set_charging_profile(client: CitrineOSClient):
 
     from datetime import datetime, timezone
 
-    start_schedule = prompt(
-        "Start schedule ISO8601 (leave empty for now)",
-        datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-    )
+    start_schedule = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
     profile: dict[str, Any] = {
         "id": profile_id,
@@ -733,7 +875,7 @@ def action_set_charging_profile(client: CitrineOSClient):
         **({"transactionId": transaction_id} if transaction_id else {}),
         "chargingSchedule": [
             {
-                "id": 1,
+                "id": profile_id,
                 "startSchedule": start_schedule,
                 "chargingRateUnit": unit,
                 "chargingSchedulePeriod": [period],
@@ -837,6 +979,227 @@ def action_get_composite_schedule(client: CitrineOSClient):
             print(f"  Body: {e.response.text}")
 
 
+def action_update_dynamic_schedule(client: CitrineOSClient):
+    print_header("Update Dynamic Schedule (OCPP 2.1)")
+    station_id = pick_station(client)
+    if not station_id:
+        return
+
+    # Auto-pick latest active transaction for default profile lookup
+    active_tx = client.get_latest_active_transaction(station_id)
+    tx_id_default = active_tx["transactionId"] if active_tx else None
+
+    suggested_profile_id = client.get_charging_profile_db_id(station_id, tx_id_default)
+    profile_id = prompt_int(
+        "Charging profile ID to update (DB id of the active profile)",
+        suggested_profile_id or 1,
+    )
+
+    print("\n  Schedule update fields (leave empty to skip):")
+    setpoint_raw = prompt("setpoint (positive=charge, negative=discharge)", "")
+    limit_raw = prompt("limit (max charge rate, positive)", "")
+    discharge_limit_raw = prompt("dischargeLimit (max discharge rate, negative)", "")
+    setpoint_reactive_raw = prompt("setpointReactive (reactive power)", "")
+
+    schedule_update: dict[str, Any] = {}
+    if setpoint_raw:
+        schedule_update["setpoint"] = float(setpoint_raw)
+    if limit_raw:
+        schedule_update["limit"] = float(limit_raw)
+    if discharge_limit_raw:
+        schedule_update["dischargeLimit"] = float(discharge_limit_raw)
+    if setpoint_reactive_raw:
+        schedule_update["setpointReactive"] = float(setpoint_reactive_raw)
+
+    if not schedule_update:
+        print("  No fields to update.")
+        return
+
+    body_preview = {"chargingProfileId": profile_id, "scheduleUpdate": schedule_update}
+    print("\n  Will send:")
+    print_json(body_preview)
+    confirm = prompt("Send? (y/n)", "y")
+    if confirm.lower() != "y":
+        print("  Cancelled.")
+        return
+
+    try:
+        result = client.update_dynamic_schedule(station_id, profile_id, schedule_update, "2.1")
+        print("  Response:")
+        print_json(result)
+    except requests.HTTPError as e:
+        print(f"  HTTP Error: {e}")
+        if e.response is not None:
+            print(f"  Body: {e.response.text}")
+
+
+def _bpt_send_setpoint(client: CitrineOSClient, mode: str):
+    """Quick BPT helper: send a SetChargingProfile with a single setpoint.
+    mode is 'charge' or 'discharge'.
+    """
+    label = "Charge" if mode == "charge" else "Discharge"
+    sign = 1 if mode == "charge" else -1
+
+    print_header(f"BPT Quick: {label}")
+    station_id = client.get_first_online_station()
+    if not station_id:
+        print("  No online station found.")
+        return
+    print(f"  Station: {station_id}")
+
+    active_tx = client.get_latest_active_transaction(station_id)
+    if not active_tx:
+        print("  No active transaction. Start a transaction first.")
+        return
+    transaction_id = active_tx["transactionId"]
+    print(f"  Transaction: {transaction_id}")
+
+    default_value = "7200" if mode == "charge" else "7200"
+    value_str = prompt(f"{label} value in W (positive number)", default_value)
+    value = float(value_str)
+    setpoint = sign * abs(value)
+
+    # Auto-increment ID/stack
+    next_profile_id = 1
+    next_stack = 1
+    try:
+        existing = client._graphql(
+            """query ($s: String!) { ChargingProfiles(where: {stationId:{_eq:$s}}, order_by:{id:desc}, limit:1) { id stackLevel } }""",
+            {"s": station_id},
+        )["ChargingProfiles"]
+        if existing:
+            next_profile_id = (existing[0]["id"] or 0) + 1
+            next_stack = (existing[0]["stackLevel"] or 0) + 1
+    except Exception:
+        pass
+
+    from datetime import datetime, timezone
+    period: dict[str, Any] = {
+        "startPeriod": 0,
+        "limit": max(7200.0, abs(setpoint)),
+        "setpoint": setpoint,
+        "operationMode": "CentralSetpoint",
+    }
+    if mode == "discharge":
+        period["dischargeLimit"] = -max(7200.0, abs(setpoint))
+
+    profile = {
+        "id": next_profile_id,
+        "stackLevel": next_stack,
+        "chargingProfilePurpose": "TxProfile",
+        "chargingProfileKind": "Absolute",
+        "transactionId": transaction_id,
+        "chargingSchedule": [{
+            "id": next_profile_id,
+            "startSchedule": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "chargingRateUnit": "W",
+            "chargingSchedulePeriod": [period],
+        }],
+    }
+
+    print("\n  Sending profile:")
+    print_json(profile)
+    try:
+        result = client.set_charging_profile(station_id, 1, profile, "2.1")
+        print("  Response:")
+        print_json(result)
+    except requests.HTTPError as e:
+        print(f"  HTTP Error: {e}")
+        if e.response is not None:
+            print(f"  Body: {e.response.text}")
+
+
+def action_bpt_charge(client: CitrineOSClient):
+    _bpt_send_setpoint(client, "charge")
+
+
+def action_bpt_discharge(client: CitrineOSClient):
+    _bpt_send_setpoint(client, "discharge")
+
+
+def action_bpt_dynamic_update(client: CitrineOSClient):
+    """Quick BPT: send UpdateDynamicSchedule for the active profile."""
+    print_header("BPT Quick: Update Dynamic Setpoint")
+    station_id = client.get_first_online_station()
+    if not station_id:
+        print("  No online station found.")
+        return
+    print(f"  Station: {station_id}")
+
+    active_tx = client.get_latest_active_transaction(station_id)
+    if not active_tx:
+        print("  No active transaction.")
+        return
+    print(f"  Transaction: {active_tx['transactionId']}")
+
+    profile_id = client.get_charging_profile_db_id(station_id, active_tx["transactionId"])
+    if not profile_id:
+        print("  No active charging profile found. Send a SetChargingProfile first.")
+        return
+    print(f"  Profile DB id: {profile_id}")
+
+    setpoint_str = prompt("New setpoint in W (positive=charge, negative=discharge)", "-7200")
+    setpoint = float(setpoint_str)
+
+    schedule_update = {"setpoint": setpoint}
+    if setpoint > 0:
+        schedule_update["limit"] = max(7200.0, setpoint)
+    else:
+        schedule_update["dischargeLimit"] = min(-7200.0, setpoint)
+
+    print("\n  Sending UpdateDynamicSchedule:")
+    print_json({"chargingProfileId": profile_id, "scheduleUpdate": schedule_update})
+    try:
+        result = client.update_dynamic_schedule(station_id, profile_id, schedule_update, "2.1")
+        print("  Response:")
+        print_json(result)
+    except requests.HTTPError as e:
+        print(f"  HTTP Error: {e}")
+        if e.response is not None:
+            print(f"  Body: {e.response.text}")
+
+
+def action_bpt_stop(client: CitrineOSClient):
+    """Quick BPT: stop the latest active transaction on the first online station."""
+    print_header("BPT Quick: Stop Active Transaction")
+    station_id = client.get_first_online_station()
+    if not station_id:
+        print("  No online station found.")
+        return
+    active_tx = client.get_latest_active_transaction(station_id)
+    if not active_tx:
+        print("  No active transaction to stop.")
+        return
+    tx_id = active_tx["transactionId"]
+    print(f"  Stopping {tx_id} on {station_id}")
+    try:
+        result = client.request_stop_transaction(station_id, tx_id, "2.1")
+        print("  Response:")
+        print_json(result)
+    except requests.HTTPError as e:
+        print(f"  HTTP Error: {e}")
+        if e.response is not None:
+            print(f"  Body: {e.response.text}")
+
+
+def action_bpt_status(client: CitrineOSClient):
+    """Show current BPT-relevant state: online stations, active transactions, latest profile."""
+    print_header("BPT Status")
+    stations = client.list_stations()
+    online = [s for s in stations if s.get("isOnline")]
+    print(f"  Stations: {len(stations)} total, {len(online)} online")
+    for s in online:
+        print(f"    - {s['id']}  ({s.get('protocol','?')})")
+        active_tx = client.get_latest_active_transaction(s["id"])
+        if active_tx:
+            print(f"      tx: {active_tx['transactionId']}  state={active_tx.get('chargingState','?')}")
+            pid = client.get_charging_profile_db_id(s["id"], active_tx["transactionId"])
+            if pid:
+                print(f"      profile DB id: {pid}")
+        else:
+            print(f"      (no active transaction)")
+
+
 def action_raw_post(client: CitrineOSClient):
     print_header("Raw OCPP Message (Advanced)")
     station_id = pick_station(client)
@@ -887,6 +1250,13 @@ def action_raw_graphql(client: CitrineOSClient):
 # --- Main menu ---
 
 MENU = [
+    # --- BPT quick actions (top of menu for easy access) ---
+    ("BPT: Status", action_bpt_status),
+    ("BPT: Quick Charge (auto)", action_bpt_charge),
+    ("BPT: Quick Discharge (auto)", action_bpt_discharge),
+    ("BPT: Update Dynamic Setpoint (auto)", action_bpt_dynamic_update),
+    ("BPT: Stop Active Transaction (auto)", action_bpt_stop),
+    # --- Standard actions ---
     ("List Charging Stations", action_list_stations),
     ("Station Detail", action_station_detail),
     ("List Transactions", action_list_transactions),
@@ -898,6 +1268,7 @@ MENU = [
     ("Trigger Message", action_trigger_message),
     ("Get Variables", action_get_variables),
     ("Set Charging Profile", action_set_charging_profile),
+    ("Update Dynamic Schedule", action_update_dynamic_schedule),
     ("Get Charging Profiles", action_get_charging_profiles),
     ("Clear Charging Profile", action_clear_charging_profile),
     ("Get Composite Schedule", action_get_composite_schedule),

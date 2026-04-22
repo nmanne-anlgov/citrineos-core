@@ -189,3 +189,4 @@ export type CostUpdatedRequest = OCPP2_1.CostUpdatedRequest | OCPP2_0_1.CostUpda
 export type GetTransactionStatusRequest =
   | OCPP2_1.GetTransactionStatusRequest
   | OCPP2_0_1.GetTransactionStatusRequest;
+export type UpdateDynamicScheduleRequest = OCPP2_1.UpdateDynamicScheduleRequest;

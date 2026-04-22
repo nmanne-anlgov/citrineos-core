@@ -153,6 +153,7 @@ export class InternalSmartCharging implements ISmartCharging {
 
     const chargingSchedule: OCPP2_1.ChargingScheduleType = {
       id: scheduleId,
+      startSchedule: currentTime.toISOString(),
       duration,
       chargingRateUnit,
       chargingSchedulePeriod,

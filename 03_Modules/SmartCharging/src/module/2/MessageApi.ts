@@ -592,6 +592,49 @@ export class SmartChargingOcpp2Api
     );
   }
 
+  @AsMessageEndpoint(OCPP_CallAction.UpdateDynamicSchedule, (instance: SmartChargingOcpp2Api) =>
+    getOcpp2Schema(
+      (instance._ocppVersion ?? DEFAULT_VERSION) as Exclude<OCPPVersion, OCPPVersion.OCPP1_6>,
+      'UpdateDynamicScheduleRequestSchema',
+    ),
+  )
+  async updateDynamicSchedule(
+    identifier: string[],
+    request: OCPP2_request_types.UpdateDynamicScheduleRequest,
+    callbackUrl?: string,
+    tenantId: number = DEFAULT_TENANT_ID,
+  ): Promise<IMessageConfirmation[]> {
+    return Promise.all(
+      identifier.map(async (id) => {
+        this._logger.info(
+          `UpdateDynamicSchedule for station ${id}: ${JSON.stringify(request)}`,
+        );
+
+        const profile = await this._module.chargingProfileRepository.readOnlyOneByQuery(tenantId, {
+          where: {
+            id: request.chargingProfileId,
+            stationId: id,
+          },
+        });
+        if (!profile) {
+          return {
+            success: false,
+            payload: `ChargingProfile ${request.chargingProfileId} not found on station ${id}.`,
+          };
+        }
+
+        return this._module.sendCall(
+          id,
+          tenantId,
+          OCPPVersion.OCPP2_1,
+          OCPP_CallAction.UpdateDynamicSchedule,
+          request,
+          callbackUrl,
+        );
+      }),
+    );
+  }
+
   /**
    * Overrides superclass method to generate the URL path based on the input {@link CallAction}
    * and the module's endpoint prefix configuration.
