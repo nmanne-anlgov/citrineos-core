@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 Phase: 03
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-03-26
+Last activity: 2026-04-27 - Completed quick task 260427-kze: Use active transaction's evseId in BPTSlider instead of hard-coded 1
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -74,6 +74,12 @@ None yet.
 
 - OCPPValidator bug (VALID-01) makes all OCPP 2.1 test results unreliable until fixed -- must be first work item in Phase 1
 - SmartCharging module has zero test coverage (confirmed by research) -- increases risk of regressions in Phase 2
+
+### Quick Tasks Completed
+
+| #          | Description                                                        | Date       | Commit     | Directory                                                                                                                |
+| ---------- | ------------------------------------------------------------------ | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
+| 260427-kze | Use active transaction's evseId in BPTSlider instead of hard-coded 1 | 2026-04-27 | `1fdd0c10` | [260427-kze-use-active-transaction-s-evseid-in-bptsl](./quick/260427-kze-use-active-transaction-s-evseid-in-bptsl/) |
 
 ## Session Continuity
 
