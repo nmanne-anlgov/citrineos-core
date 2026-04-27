@@ -16,7 +16,7 @@ const MAX_DISCHARGE_A = 30;    // matches v2xChargingParameters.maxDischargeCurr
 const STEP_A = 0.5;
 const NOMINAL_V = 400;          // for the W estimate displayed under the slider
 
-export default function BPTSlider({ stationId, transactionId, onLog }) {
+export default function BPTSlider({ stationId, transactionId, evseId, onLog }) {
   const [setpoint, setSetpoint] = useState(0);
   const [profileId, setProfileId] = useState(null);
   const [ready, setReady] = useState(false);
@@ -42,7 +42,7 @@ export default function BPTSlider({ stationId, transactionId, onLog }) {
           maxCharge: MAX_CHARGE_A,
           maxDischarge: MAX_DISCHARGE_A,
         });
-        const result = await setChargingProfile(stationId, 1, profile, '2.1');
+        const result = await setChargingProfile(stationId, evseId ?? 1, profile, '2.1');
         const r0 = Array.isArray(result) ? result[0] : result;
         if (cancelled) return;
         if (r0 && r0.success === false) {
@@ -57,7 +57,7 @@ export default function BPTSlider({ stationId, transactionId, onLog }) {
       }
     })();
     return () => { cancelled = true; };
-  }, [stationId, transactionId]);
+  }, [stationId, transactionId, evseId]);
 
   const sendUpdate = async (valueA) => {
     if (inFlight.current || !profileId) return;
