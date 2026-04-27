@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 Phase: 03
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-27 - Completed quick task 260427-kze: Use active transaction's evseId in BPTSlider instead of hard-coded 1
+Last activity: 2026-04-27 - Completed quick task 260427-l9m: Fix BPTSlider evseId to use Evse.evseTypeId via relation, not Transaction.evseId FK
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -80,6 +80,7 @@ None yet.
 | #          | Description                                                        | Date       | Commit     | Directory                                                                                                                |
 | ---------- | ------------------------------------------------------------------ | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
 | 260427-kze | Use active transaction's evseId in BPTSlider instead of hard-coded 1 | 2026-04-27 | `1fdd0c10` | [260427-kze-use-active-transaction-s-evseid-in-bptsl](./quick/260427-kze-use-active-transaction-s-evseid-in-bptsl/) |
+| 260427-l9m | Fix BPTSlider evseId to use Evse.evseTypeId via relation, not Transaction.evseId FK | 2026-04-27 | `bba7cf5e` | [260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp](./quick/260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp/) |
 
 ## Session Continuity
 
