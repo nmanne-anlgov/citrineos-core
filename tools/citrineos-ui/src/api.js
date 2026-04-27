@@ -52,7 +52,9 @@ export async function listTransactions(stationId) {
       Transactions${where} {
         transactionId
         stationId
-        evseId
+        Evse {
+          evseTypeId
+        }
         isActive
         chargingState
         stoppedReason

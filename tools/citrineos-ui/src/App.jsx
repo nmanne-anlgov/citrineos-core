@@ -154,7 +154,7 @@ export default function App() {
           <BPTSlider
             stationId={stationId}
             transactionId={activeTx.transactionId}
-            evseId={activeTx.evseId}
+            evseId={activeTx.Evse?.evseTypeId}
             onLog={(msg, level) => showToast(msg, level)}
           />
         </div>
