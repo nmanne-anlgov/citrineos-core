@@ -68,7 +68,7 @@ Recent decisions affecting current work:
 
 ### Roadmap Evolution
 
-- Phase 4 added: Fix unbound this._module.sendCall in OCPP 2.x MessageApi packageGroupCall callsites (discovered via V2X discharge testing — HTTP 500 from requestStopTransaction, ~22 broken callsites across 7 modules)
+- Phase 4 added: Fix unbound this.\_module.sendCall in OCPP 2.x MessageApi packageGroupCall callsites (discovered via V2X discharge testing — HTTP 500 from requestStopTransaction, ~22 broken callsites across 7 modules)
 
 ### Pending Todos
 
@@ -81,11 +81,12 @@ None yet.
 
 ### Quick Tasks Completed
 
-| #          | Description                                                        | Date       | Commit     | Directory                                                                                                                |
-| ---------- | ------------------------------------------------------------------ | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------------ |
-| 260427-kze | Use active transaction's evseId in BPTSlider instead of hard-coded 1 | 2026-04-27 | `1fdd0c10` | [260427-kze-use-active-transaction-s-evseid-in-bptsl](./quick/260427-kze-use-active-transaction-s-evseid-in-bptsl/) |
-| 260427-l9m | Fix BPTSlider evseId to use Evse.evseTypeId via relation, not Transaction.evseId FK | 2026-04-27 | `bba7cf5e` | [260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp](./quick/260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp/) |
-| 260427-mkw | Fix findEvseByIdAndConnectorId to look up by evseTypeId and drop removed connectorId filter | 2026-04-28 | `adc86956` | [260427-mkw-fix-findevsebyidandconnectorid-to-look-u](./quick/260427-mkw-fix-findevsebyidandconnectorid-to-look-u/) |
+| #          | Description                                                                                                           | Date       | Commit     | Directory                                                                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------------- | ---------- | ---------- | ------------------------------------------------------------------------------------------------------------------- |
+| 260427-kze | Use active transaction's evseId in BPTSlider instead of hard-coded 1                                                  | 2026-04-27 | `1fdd0c10` | [260427-kze-use-active-transaction-s-evseid-in-bptsl](./quick/260427-kze-use-active-transaction-s-evseid-in-bptsl/) |
+| 260427-l9m | Fix BPTSlider evseId to use Evse.evseTypeId via relation, not Transaction.evseId FK                                   | 2026-04-27 | `bba7cf5e` | [260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp](./quick/260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp/) |
+| 260427-mkw | Fix findEvseByIdAndConnectorId to look up by evseTypeId and drop removed connectorId filter                           | 2026-04-28 | `adc86956` | [260427-mkw-fix-findevsebyidandconnectorid-to-look-u](./quick/260427-mkw-fix-findevsebyidandconnectorid-to-look-u/) |
+| 260428-emd | Relax eMAID validator for ISO 15118-20 PnC (strip `*`, raise length cap, drop strict 'C' rule, allow 9-char instance) | 2026-04-28 | `b5d4f32c` | _(fast — no directory)_                                                                                             |
 
 ## Session Continuity
 
