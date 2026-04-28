@@ -11,10 +11,10 @@ const DEBOUNCE_MS = 300;
 // which makes W setpoints scale unpredictably (e.g., -2500 W requested came out as -1449 W
 // because libocpp cached an inflated W reference from an earlier UpdateDynamicSchedule).
 // With chargingRateUnit='A' the value passes through unchanged.
-const MAX_CHARGE_A = 30;       // matches v2xChargingParameters.maxChargeCurrent
-const MAX_DISCHARGE_A = 30;    // matches v2xChargingParameters.maxDischargeCurrent
+const MAX_CHARGE_A = 100; // upper bound on slider; EV-reported v2xChargingParameters.maxChargeCurrent is 200
+const MAX_DISCHARGE_A = 100; // upper bound on slider; EV-reported v2xChargingParameters.maxDischargeCurrent is -200
 const STEP_A = 0.5;
-const NOMINAL_V = 400;          // for the W estimate displayed under the slider
+const NOMINAL_V = 400; // for the kW estimate displayed under the slider
 
 export default function BPTSlider({ stationId, transactionId, evseId, onLog }) {
   const [setpoint, setSetpoint] = useState(0);
@@ -56,7 +56,9 @@ export default function BPTSlider({ stationId, transactionId, evseId, onLog }) {
         if (!cancelled) onLog?.(`Setup error: ${e.message}`, 'error');
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [stationId, transactionId, evseId]);
 
   const sendUpdate = async (valueA) => {
@@ -64,12 +66,7 @@ export default function BPTSlider({ stationId, transactionId, evseId, onLog }) {
     inFlight.current = true;
     setBusy(true);
     try {
-      const result = await updateDynamicSchedule(
-        stationId,
-        profileId,
-        { setpoint: valueA },
-        '2.1',
-      );
+      const result = await updateDynamicSchedule(stationId, profileId, { setpoint: valueA }, '2.1');
       const r0 = Array.isArray(result) ? result[0] : result;
       onLog?.(`UpdateDynamicSchedule @${valueA} A → ${JSON.stringify(r0)}`);
       if (r0 && r0.success === false) setProfileId(null);
@@ -90,7 +87,7 @@ export default function BPTSlider({ stationId, transactionId, evseId, onLog }) {
 
   const cls = setpoint > 0 ? 'charge' : setpoint < 0 ? 'discharge' : 'zero';
   const label = setpoint > 0 ? 'CHARGING' : setpoint < 0 ? 'DISCHARGING' : 'IDLE';
-  const wEstimate = Math.round(setpoint * NOMINAL_V);
+  const kwEstimate = (setpoint * NOMINAL_V) / 1000;
 
   return (
     <div className="slider-wrap">
@@ -101,8 +98,9 @@ export default function BPTSlider({ stationId, transactionId, evseId, onLog }) {
             {setpoint.toFixed(1)} A
           </div>
           <div className="muted">
-            {label}{busy ? ' · sending…' : ''} · ≈ {wEstimate >= 0 ? '+' : ''}
-            {wEstimate.toLocaleString()} W (@ {NOMINAL_V} V)
+            {label}
+            {busy ? ' · sending…' : ''} · ≈ {kwEstimate >= 0 ? '+' : ''}
+            {kwEstimate.toFixed(1)} kW (@ {NOMINAL_V} V)
           </div>
         </div>
         <button
