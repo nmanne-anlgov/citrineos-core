@@ -64,3 +64,13 @@ Phases execute in numeric order: 1 -> 2 -> 3
 | 1. Foundation Fixes | 0/2 | Planning complete | - |
 | 2. V2X Module Handlers | 0/0 | Not started | - |
 | 3. Integration and Connection Guide | 0/0 | Not started | - |
+
+### Phase 4: Fix unbound this._module.sendCall in OCPP 2.x MessageApi packageGroupCall callsites
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 4 to break down)

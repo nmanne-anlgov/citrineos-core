@@ -66,6 +66,10 @@ Recent decisions affecting current work:
 - [Phase 03]: Documented NotSupported gaps honestly rather than hiding broken message steps
 - [Phase 03]: Used human-readable message IDs (boot-1, tx-started-1) for guide clarity
 
+### Roadmap Evolution
+
+- Phase 4 added: Fix unbound this._module.sendCall in OCPP 2.x MessageApi packageGroupCall callsites (discovered via V2X discharge testing — HTTP 500 from requestStopTransaction, ~22 broken callsites across 7 modules)
+
 ### Pending Todos
 
 None yet.
