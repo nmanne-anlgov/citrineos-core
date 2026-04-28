@@ -213,16 +213,23 @@ export function validateIdentifierStringIdToken(idToken: string): boolean {
 }
 
 /**
- * Validates an eMAID string according to eMI³ specifications
+ * Validates an eMAID string against ISO 15118-2/-20 Annex H and eMI³ Annex 1.
+ *
+ * Accepts both the strict 14/15-char eMI³ form (`CC-PPP-CIIIIIIII[-D]`) and
+ * the more permissive ISO 15118 form (9-char instance, no `C` ID Type, longer
+ * -20 contract identifiers up to the OCPP 2.1 wire cap).
+ *
+ * Strips both `-` (eMI³) and `*` (Hubject/OCHP convention) as display separators.
+ *
  * @param emaid - The eMAID string to validate
  * @returns errors - String array with errors, empty if valid
  */
 export function validateEMAIDIdToken(emaid: string): string[] {
   const errors: string[] = [];
 
-  // Remove optional separators and convert to uppercase
-  const separator = '-';
-  let cleanedEmaid = emaid.replace(new RegExp(separator, 'g'), '').toUpperCase();
+  // Strip optional separators ('-' per eMI³ Annex 1, '*' per Hubject/OCHP convention)
+  // and uppercase. ISO 15118 alpha chars are case-insensitive.
+  let cleanedEmaid = emaid.replace(/[-*]/g, '').toUpperCase();
 
   // For backwards compatibility with DIN SPEC 91286 and eMAIDs without ID type at position 6
   if (cleanedEmaid.length === 13) {
@@ -233,24 +240,26 @@ export function validateEMAIDIdToken(emaid: string): string[] {
     cleanedEmaid = cleanedEmaid.substring(0, 5) + 'C' + cleanedEmaid.substring(5, 13);
   }
 
-  // Check overall length (14 or 15 characters without separators)
-  if (cleanedEmaid.length < 14 || cleanedEmaid.length > 15) {
-    errors.push(`Invalid length: ${cleanedEmaid.length} characters (expected 14 or 15)`);
+  // Length: ISO 15118-2 floor is 14 (CC + PPP + C + 8-instance, or CC + PPP +
+  // 9-instance without C). ISO 15118-20:2022 §3.19 increases the upper bound;
+  // 42 covers all known PnC ecosystems while staying well under OCPP 2.1's
+  // 255-char idToken cap.
+  if (cleanedEmaid.length < 14 || cleanedEmaid.length > 42) {
+    errors.push(`Invalid length: ${cleanedEmaid.length} characters (expected 14–42)`);
     return errors;
   }
 
-  // Validate character set (alphanumeric only)
+  // Validate character set (alphanumeric only after separator stripping)
   if (!/^[A-Z0-9]+$/.test(cleanedEmaid)) {
-    errors.push(
-      'eMAID must contain only alphanumeric characters (and optional hyphens as separators)',
-    );
+    errors.push('eMAID must contain only alphanumeric characters (and optional - or * separators)');
     return errors;
   }
 
-  // Parse components
+  // Parse components. ID Type at position 5 ('C' per eMI³ Annex 1) is
+  // intentionally not extracted: it is required by eMI³ but not by ISO
+  // 15118-2/-20 Annex H, so we accept tokens with or without it.
   const countryCode = cleanedEmaid.substring(0, 2);
   const providerId = cleanedEmaid.substring(2, 5);
-  const idType = cleanedEmaid.substring(5, 6);
   const instance = cleanedEmaid.substring(6, 14);
   const checkDigit = cleanedEmaid.length === 15 ? cleanedEmaid.substring(14, 15) : undefined;
 
@@ -264,14 +273,12 @@ export function validateEMAIDIdToken(emaid: string): string[] {
     errors.push('Provider ID must be exactly 3 alphanumeric characters');
   }
 
-  // Validate ID Type (must be 'C' for Contract)
-  if (idType !== 'C') {
-    errors.push(`ID Type must be 'C' for Contract (found: '${idType}')`);
-  }
-
-  // Validate Instance (8 alphanumeric)
-  if (!/^[A-Z0-9]{8}$/.test(instance)) {
-    errors.push('Instance must be exactly 8 alphanumeric characters');
+  // Validate Instance: 8 alphanumeric (eMI³) or 9 alphanumeric (ISO 15118-2/-20).
+  // For length>15 (extended -20 EMAIDs), structural parsing of instance/check
+  // digit is ambiguous; skip the strict check and rely on the alphanumeric
+  // overall-charset check above.
+  if (cleanedEmaid.length <= 15 && !/^[A-Z0-9]{8,9}$/.test(instance)) {
+    errors.push('Instance must be 8 or 9 alphanumeric characters');
   }
 
   // If check digit is present, validate it

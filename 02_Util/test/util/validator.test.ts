@@ -266,6 +266,26 @@ describe('validateIdToken', () => {
     });
   });
 
+  describe('eMAID tokens', () => {
+    it.each([
+      ['US*ANL*123456789', 'Hubject ISO 15118-20 QA: asterisk separators, 9-char instance, no C'],
+      ['USANL123456789', 'ISO 15118-2 longer-instance form, no separators, no C'],
+      ['US-ANL-C12345678', 'eMI³ canonical with hyphen separators, no check digit'],
+      ['USANLC12345678', 'eMI³ canonical without separators, no check digit'],
+      ['DE8AC12345678', 'DIN SPEC 91286 13-char form (auto-inserts C)'],
+    ])('should accept %s (%s)', (token) => {
+      expect(validateIdToken(OCPP2_0_1.IdTokenEnumType.eMAID, token).isValid).toBe(true);
+    });
+
+    it.each([
+      ['SHORT', 'too short'],
+      ['1*ANL*123456789', 'country code is not 2 letters'],
+      ['US*A!L*123456789', 'non-alphanumeric in provider'],
+    ])('should reject %s (%s)', (token) => {
+      expect(validateIdToken(OCPP2_0_1.IdTokenEnumType.eMAID, token).isValid).toBe(false);
+    });
+  });
+
   it('should return true for unknown token types', () => {
     // This is a bit of a hack to test the default case in the switch statement
     // AJV will prevent invalid token types from being passed in
