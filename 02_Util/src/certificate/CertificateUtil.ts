@@ -242,13 +242,21 @@ export async function sendOCSPRequest(
   ocspRequest: OCSPRequest | Request,
   responderURL: string,
 ): Promise<string> {
+  // OCSP-over-HTTP transports the request as DER-encoded binary (RFC 6960
+  // §A.1.1), and the response is also DER. jsrsasign produces/consumes the
+  // ASN.1 as ASCII-hex strings, so we encode hex→bytes before sending and
+  // decode bytes→hex before returning to the caller. Posting the hex string
+  // verbatim causes responders to reject the request as malformed and
+  // reading the response with .text() (UTF-8) corrupts the binary DER.
+  const requestHex = ocspRequest.getEncodedHex();
+  const requestBody = Uint8Array.from(Buffer.from(requestHex, 'hex'));
   const response = await fetch(responderURL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/ocsp-request',
       Accept: 'application/ocsp-response',
     },
-    body: ocspRequest.getEncodedHex(),
+    body: requestBody,
   });
 
   if (!response.ok) {
@@ -257,7 +265,8 @@ export async function sendOCSPRequest(
     );
   }
 
-  return await response.text();
+  const responseBuffer = await response.arrayBuffer();
+  return Buffer.from(responseBuffer).toString('hex');
 }
 
 export function parseCSRForVerification(csrPem: string): CertificationRequest {
