@@ -214,21 +214,23 @@ export class CertificateAuthorityService {
     ocspRequestData: OCPP2_1.OCSPRequestDataType[],
   ): Promise<OCPP2_1.AuthorizeCertificateStatusEnumType> {
     for (const reqData of ocspRequestData) {
-      // KJUR.asn1.ocsp.Request is a single CertID and cannot be encoded as a
-      // standalone OCSP request body (its getEncodedHex() throws "required
-      // param members not defined"). Wrap the hash data in an OCSPRequest with
-      // reqList, mirroring validateCertificateChainPem above. The runtime
-      // accepts the {alg,namehash,keyhash,serial} CertID form for each reqList
-      // item (per jsrsasign CertID docs), but @types/jsrsasign only declares
-      // the {issuerCert,subjectCert} form — hence the cast. jsrsasign also
-      // expects the alg in lowercase (e.g. 'sha256'), but OCPP sends uppercase.
+      // Build an OCSPRequest with a precomputed CertID. jsrsasign has a
+      // documentation bug here: the JSDoc + TS types claim CertID accepts
+      // {alg, namehash, keyhash, serial}, but its runtime tohex() only
+      // recognizes {alg, issname, isskey, sbjsn} (or {issuerCert, subjectCert}).
+      // Using the documented names yields "required param members not defined"
+      // at encode time. The OCSP response parser in the same file uses the
+      // same {issname, isskey, sbjsn} names, confirming these are the
+      // intended internal field names.
+      // jsrsasign also expects the alg in lowercase ('sha256'), while OCPP
+      // sends uppercase ('SHA256').
       const ocspRequest = new OCSPRequest({
         reqList: [
           {
             alg: reqData.hashAlgorithm.toLowerCase(),
-            keyhash: reqData.issuerKeyHash,
-            namehash: reqData.issuerNameHash,
-            serial: reqData.serialNumber,
+            issname: reqData.issuerNameHash,
+            isskey: reqData.issuerKeyHash,
+            sbjsn: reqData.serialNumber,
           } as unknown as jsrsasign.KJUR.asn1.ocsp.CertificateRequest,
         ],
       });
