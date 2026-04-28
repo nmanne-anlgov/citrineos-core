@@ -349,7 +349,13 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
           if (!definition['$id']) {
             definition['$id'] = key;
           }
-          this.registerSchema(fastifyInstance, definition);
+          // Propagate the prefix so version-specific schemas (e.g. ocpp2.0.1
+          // and ocpp2.1) don't share a single global registration of a same-
+          // named inner definition. Without this, the first version registered
+          // wins and Fastify resolves $refs from later versions to the wrong
+          // schema, silently stripping fields like setpoint/dischargeLimit
+          // that exist in 2.1's ChargingSchedulePeriodType but not 2.0.1's.
+          this.registerSchema(fastifyInstance, definition, schemaIdPrefix);
         });
       }
       if (schemaCopy.properties) {
@@ -357,9 +363,15 @@ export abstract class AbstractModuleApi<T extends IModule> implements IModuleApi
           const property = schemaCopy.properties[key];
           if (property.$ref) {
             property.$ref = property.$ref.replace('#/definitions/', '');
+            if (schemaIdPrefix) {
+              property.$ref = schemaIdPrefix + property.$ref;
+            }
           }
           if (property.items && property.items.$ref) {
             property.items.$ref = property.items.$ref.replace('#/definitions/', '');
+            if (schemaIdPrefix) {
+              property.items.$ref = schemaIdPrefix + property.items.$ref;
+            }
           }
         });
       }
