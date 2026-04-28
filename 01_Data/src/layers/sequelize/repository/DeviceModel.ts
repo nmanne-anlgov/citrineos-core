@@ -496,12 +496,16 @@ export class SequelizeDeviceModelRepository
   async findEvseByIdAndConnectorId(
     tenantId: number,
     id: number,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     connectorId: number | null,
   ): Promise<EvseType | undefined> {
+    // `id` here is the OCPP-level evseId from the request body, which CitrineOS persists as
+    // Evse.evseTypeId (see Evse.ts: "the serial int used in OCPP 2.0.1 to refer to the EVSE").
+    // The `connectorId` parameter is currently unused (kept for signature stability — callers
+    // pass null) because the Evses.connectorId column was removed by migration 20250821103100.
     const storedEvses = await this.evse.readAllByQuery(tenantId, {
       where: {
-        id: id,
-        connectorId: connectorId,
+        evseTypeId: id,
       },
     });
     return storedEvses.length > 0 ? storedEvses[0] : undefined;
