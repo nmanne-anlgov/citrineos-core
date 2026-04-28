@@ -87,7 +87,12 @@ export async function validateChargingProfileType(
         `Transaction ${chargingProfileType.transactionId} not found on station ${stationId}.`,
       );
     }
-    const evse = await deviceModelRepository.findEvseByIdAndConnectorId(tenantId, evseId, null);
+    const evse = await deviceModelRepository.findEvseByIdAndConnectorId(
+      tenantId,
+      stationId,
+      evseId,
+      null,
+    );
     if (!evse) {
       throw new Error(`Evse ${evseId} not found.`);
     }
@@ -95,7 +100,7 @@ export async function validateChargingProfileType(
     receivedChargingNeeds =
       await chargingProfileRepository.findChargingNeedsByEvseDBIdAndTransactionDBId(
         tenantId,
-        evse.databaseId,
+        evse.id,
         transaction.id,
       );
     logger.info(`Found ChargingNeeds: ${JSON.stringify(receivedChargingNeeds)}`);

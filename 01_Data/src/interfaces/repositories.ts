@@ -161,9 +161,10 @@ export interface IDeviceModelRepository
   ): Promise<Component>;
   findEvseByIdAndConnectorId(
     tenantId: number,
+    stationId: string,
     id: number,
     connectorId: number | null,
-  ): Promise<EvseType | undefined>;
+  ): Promise<Evse | undefined>;
   findVariableCharacteristicsByVariableNameAndVariableInstance(
     tenantId: number,
     variableName: string,

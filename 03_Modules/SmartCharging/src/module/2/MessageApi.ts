@@ -295,6 +295,7 @@ export class SmartChargingOcpp2Api
 
           const evse = await this._module.deviceModelRepository.findEvseByIdAndConnectorId(
             tenantId,
+            id,
             request.evseId,
             null,
           );
@@ -311,7 +312,7 @@ export class SmartChargingOcpp2Api
           const receivedChargingNeeds =
             await this._module.chargingProfileRepository.findChargingNeedsByEvseDBIdAndTransactionDBId(
               tenantId,
-              evse.databaseId,
+              evse.id,
               transaction.id,
             );
           if (!receivedChargingNeeds && chargingProfile.chargingSchedule.length > 1) {
@@ -557,6 +558,7 @@ export class SmartChargingOcpp2Api
         if (request.evseId !== 0) {
           const evse = await this._module.deviceModelRepository.findEvseByIdAndConnectorId(
             tenantId,
+            id,
             request.evseId,
             null,
           );
@@ -606,9 +608,7 @@ export class SmartChargingOcpp2Api
   ): Promise<IMessageConfirmation[]> {
     return Promise.all(
       identifier.map(async (id) => {
-        this._logger.info(
-          `UpdateDynamicSchedule for station ${id}: ${JSON.stringify(request)}`,
-        );
+        this._logger.info(`UpdateDynamicSchedule for station ${id}: ${JSON.stringify(request)}`);
 
         const profile = await this._module.chargingProfileRepository.readOnlyOneByQuery(tenantId, {
           where: {

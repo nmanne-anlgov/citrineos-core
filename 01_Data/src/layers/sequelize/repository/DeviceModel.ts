@@ -11,6 +11,7 @@ import {
 import { Op } from 'sequelize';
 import {
   Component,
+  Evse,
   EvseType,
   Variable,
   VariableAttribute,
@@ -495,25 +496,24 @@ export class SequelizeDeviceModelRepository
 
   async findEvseByIdAndConnectorId(
     tenantId: number,
+    stationId: string,
     id: number,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     connectorId: number | null,
-  ): Promise<EvseType | undefined> {
-    // `this.evse` is a CrudRepository<EvseType>, so this queries the EvseTypes
-    // table — whose `id` column already holds the OCPP-level evseId. (The
-    // separate Evses table also has an `evseTypeId` column for its FK to
-    // EvseTypes; that one is not relevant here.)
-    // The `connectorId` parameter is currently unused (callers pass null) and
-    // intentionally not filtered: migration 20250821103100 backfilled
-    // EvseTypes from the legacy Evses table carrying over non-null connectorId
-    // values, so a strict `connectorId: null` filter would miss legitimate
-    // EVSE-level rows.
-    const storedEvses = await this.evse.readAllByQuery(tenantId, {
-      where: {
-        id,
-      },
-    });
-    return storedEvses.length > 0 ? storedEvses[0] : undefined;
+  ): Promise<Evse | undefined> {
+    // Query the location-scoped Evse model, not EvseType. ChargingNeeds.evseId
+    // and Transaction.evseId are FKs to Evse.databaseId, so callers that use
+    // the returned databaseId for those joins need an Evse row, not an
+    // EvseType row. EvseType is the OCPP component-reference model used by
+    // the device-model graph and is populated independently.
+    // `id` is the OCPP-level evseId from the request body, persisted as
+    // Evse.evseTypeId per the model comment ("the serial int used in OCPP
+    // 2.0.1 to refer to the EVSE").
+    return (
+      (await Evse.findOne({
+        where: { tenantId, stationId, evseTypeId: id },
+      })) ?? undefined
+    );
   }
 
   async findVariableCharacteristicsByVariableNameAndVariableInstance(
