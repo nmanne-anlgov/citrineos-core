@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 Phase: 03
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-04-28 - Completed quick task 260427-mkw: Fix findEvseByIdAndConnectorId to look up by evseTypeId and drop removed connectorId filter
+Last activity: 2026-04-29 - Completed quick task 260429-ixg: Wire Hubject credentials through env vars instead of config.json
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -87,6 +87,7 @@ None yet.
 | 260427-l9m | Fix BPTSlider evseId to use Evse.evseTypeId via relation, not Transaction.evseId FK                                   | 2026-04-27 | `bba7cf5e` | [260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp](./quick/260427-l9m-fix-bptslider-evseid-to-use-evse-evsetyp/) |
 | 260427-mkw | Fix findEvseByIdAndConnectorId to look up by evseTypeId and drop removed connectorId filter                           | 2026-04-28 | `adc86956` | [260427-mkw-fix-findevsebyidandconnectorid-to-look-u](./quick/260427-mkw-fix-findevsebyidandconnectorid-to-look-u/) |
 | 260428-emd | Relax eMAID validator for ISO 15118-20 PnC (strip `*`, raise length cap, drop strict 'C' rule, allow 9-char instance) | 2026-04-28 | `b5d4f32c` | _(fast — no directory)_                                                                                             |
+| 260429-ixg | Wire Hubject credentials through env vars instead of config.json                                                      | 2026-04-29 | `42ba682a` | [260429-ixg-wire-hubject-credentials-through-env-var](./quick/260429-ixg-wire-hubject-credentials-through-env-var/) |
 
 ## Session Continuity
 
