@@ -316,12 +316,34 @@ export class EVDriverModule extends AbstractModule {
 
     // Validate Contract Certificates based on OCPP 2.0.1 Part 2 C07
     if (request.iso15118CertificateHashData || request.certificate) {
-      // TODO - implement validation using cached OCSP data described in C07.FR.05
+      // For eMAID tokens, check the local cache first (C07.FR.05). Only call out to OCSP if the
+      // cache is missing or expired — the eMAID cannot be pre-registered before cert installation
+      // so a valid cached entry is sufficient proof of a prior successful OCSP validation.
+      if (request.idToken.type === OCPP2_0_1.IdTokenEnumType.eMAID) {
+        const cached = await this._authorizeRepository.readOnlyOneByQuerystring(context.tenantId, {
+          idToken: request.idToken.idToken,
+          type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(request.idToken.type),
+        });
+        if (
+          cached &&
+          cached.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted &&
+          (!cached.cacheExpiryDateTime || new Date() < new Date(cached.cacheExpiryDateTime))
+        ) {
+          response.certificateStatus = OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted;
+          response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
+          const messageConfirmation = await this.sendCallResultWithMessage(message, response);
+          this._logger.debug('Authorize response sent (eMAID cached):', messageConfirmation);
+          return;
+        }
+      }
+
+      let ocspNextUpdate: string | undefined;
       if (request.iso15118CertificateHashData && request.iso15118CertificateHashData.length > 0) {
-        response.certificateStatus =
-          await this._certificateAuthorityService.validateCertificateHashData(
-            request.iso15118CertificateHashData,
-          );
+        const ocspResult = await this._certificateAuthorityService.validateCertificateHashData(
+          request.iso15118CertificateHashData,
+        );
+        response.certificateStatus = ocspResult.status;
+        ocspNextUpdate = ocspResult.ocspNextUpdate;
       }
       // If Charging Station is not able to validate a contract certificate,
       // it SHALL pass the contract certificate chain to the CSMS in certificate attribute (in PEM
@@ -332,6 +354,41 @@ export class EVDriverModule extends AbstractModule {
       }
       if (response.certificateStatus !== OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted) {
         response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Invalid;
+        const messageConfirmation = await this.sendCallResultWithMessage(message, response);
+        this._logger.debug('Authorize response sent:', messageConfirmation);
+        return;
+      }
+
+      // OCSP passed — persist the eMAID so the next authorization uses the cache above.
+      if (request.idToken.type === OCPP2_0_1.IdTokenEnumType.eMAID) {
+        const existing = await this._authorizeRepository.readOnlyOneByQuerystring(context.tenantId, {
+          idToken: request.idToken.idToken,
+          type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(request.idToken.type),
+        });
+        if (!existing) {
+          const newAuth = Authorization.build({
+            idToken: request.idToken.idToken,
+            idTokenType: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(
+              request.idToken.type,
+            ),
+            status: OCPP2_0_1.AuthorizationStatusEnumType.Accepted,
+            cacheExpiryDateTime: ocspNextUpdate,
+            tenantId: context.tenantId,
+          });
+          await this._authorizeRepository.create(context.tenantId, newAuth).catch((err: unknown) => {
+            this._logger.error('Failed to persist eMAID authorization:', err);
+          });
+          this._logger.info(
+            `Persisted new eMAID authorization: ${request.idToken.idToken}, cache expires: ${ocspNextUpdate ?? 'never'}`,
+          );
+        } else {
+          // Update cacheExpiryDateTime so the cached entry stays fresh after re-validation.
+          existing.cacheExpiryDateTime = ocspNextUpdate;
+          await existing.save().catch((err: unknown) => {
+            this._logger.error('Failed to update eMAID cache expiry:', err);
+          });
+        }
+        response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
         this._logger.debug('Authorize response sent:', messageConfirmation);
         return;

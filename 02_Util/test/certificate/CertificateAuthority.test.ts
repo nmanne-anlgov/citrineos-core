@@ -234,7 +234,7 @@ describe('CertificateAuthorityService', () => {
         givenResponderURL,
       );
       expect(KJUR.asn1.ocsp.OCSPUtil.getOCSPResponseInfo).toHaveBeenCalledWith(mockOCSPResponse);
-      expect(actualResult).toBe(OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted);
+      expect(actualResult.status).toBe(OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted);
     });
   });
 });

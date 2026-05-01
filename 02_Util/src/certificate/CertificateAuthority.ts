@@ -210,9 +210,12 @@ export class CertificateAuthorityService {
     return OCPP2_1.AuthorizeCertificateStatusEnumType.Accepted;
   }
 
-  public async validateCertificateHashData(
-    ocspRequestData: OCPP2_1.OCSPRequestDataType[],
-  ): Promise<OCPP2_1.AuthorizeCertificateStatusEnumType> {
+  public async validateCertificateHashData(ocspRequestData: OCPP2_1.OCSPRequestDataType[]): Promise<{
+    status: OCPP2_1.AuthorizeCertificateStatusEnumType;
+    ocspNextUpdate?: string;
+  }> {
+    let earliestNextUpdate: Date | undefined;
+
     for (const reqData of ocspRequestData) {
       // Build an OCSPRequest with a precomputed CertID. jsrsasign has a
       // documentation bug here: the JSDoc + TS types claim CertID accepts
@@ -244,17 +247,33 @@ export class CertificateAuthorityService {
         // source: https://kjur.github.io/jsrsasign/api/symbols/KJUR.asn1.ocsp.OCSPUtil.html#.getOCSPResponseInfo
         const certStatus = ocspResponse.certStatus;
         if (certStatus === 'revoked') {
-          return OCPP2_1.AuthorizeCertificateStatusEnumType.CertificateRevoked;
+          return { status: OCPP2_1.AuthorizeCertificateStatusEnumType.CertificateRevoked };
         } else if (certStatus !== 'good') {
-          return OCPP2_1.AuthorizeCertificateStatusEnumType.NoCertificateAvailable;
+          return { status: OCPP2_1.AuthorizeCertificateStatusEnumType.NoCertificateAvailable };
+        }
+        // Track the earliest nextUpdate across all certs — use as cache expiry.
+        // jsrsasign returns ASN.1 GeneralizedTime as "YYYYMMDDHHmmssZ" which
+        // JS Date cannot parse directly — convert to ISO 8601 first.
+        if (ocspResponse.nextUpdate) {
+          const iso = (ocspResponse.nextUpdate as string).replace(
+            /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$/,
+            '$1-$2-$3T$4:$5:$6Z',
+          );
+          const nextUpdate = new Date(iso);
+          if (!isNaN(nextUpdate.getTime()) && (!earliestNextUpdate || nextUpdate < earliestNextUpdate)) {
+            earliestNextUpdate = nextUpdate;
+          }
         }
       } catch (error) {
         this._logger.error(`Failed to fetch OCSP response: ${error}`);
-        return OCPP2_1.AuthorizeCertificateStatusEnumType.NoCertificateAvailable;
+        return { status: OCPP2_1.AuthorizeCertificateStatusEnumType.NoCertificateAvailable };
       }
     }
 
-    return OCPP2_1.AuthorizeCertificateStatusEnumType.Accepted;
+    return {
+      status: OCPP2_1.AuthorizeCertificateStatusEnumType.Accepted,
+      ocspNextUpdate: earliestNextUpdate?.toISOString(),
+    };
   }
 
   /**
