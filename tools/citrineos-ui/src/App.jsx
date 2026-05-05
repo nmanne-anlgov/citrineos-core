@@ -7,7 +7,8 @@ import {
 } from './api.js';
 import StationSelector from './components/StationSelector.jsx';
 import StartTransactionModal from './components/StartTransactionModal.jsx';
-import BPTSlider from './components/BPTSlider.jsx';
+import BPTControl from './components/BPTControl.jsx';
+import PowerProfileGraph from './components/PowerProfileGraph.jsx';
 
 const REFRESH_MS = 3000;
 
@@ -150,14 +151,22 @@ export default function App() {
       </div>
 
       {activeTx && (
-        <div className="panel">
-          <BPTSlider
-            stationId={stationId}
-            transactionId={activeTx.transactionId}
-            evseId={activeTx.Evse?.evseTypeId}
-            onLog={(msg, level) => showToast(msg, level)}
-          />
-        </div>
+        <>
+          <div className="panel">
+            <BPTControl
+              stationId={stationId}
+              transactionId={activeTx.transactionId}
+              evseId={activeTx.Evse?.evseTypeId}
+              onLog={(msg, level) => showToast(msg, level)}
+            />
+          </div>
+          <div className="panel">
+            <PowerProfileGraph
+              transactionDatabaseId={activeTx.id}
+              transactionId={activeTx.transactionId}
+            />
+          </div>
+        </>
       )}
 
       {showModal && (

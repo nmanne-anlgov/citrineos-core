@@ -187,3 +187,75 @@ input[type="range"] {
   font-size: 11px;
   color: var(--muted);
 }
+
+/* Tabs (Setpoint / Schedule) */
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  width: auto;
+  background: transparent;
+  color: var(--muted);
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  padding: 8px 14px;
+  font-weight: 500;
+  margin-bottom: -1px;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* Schedule editor */
+.schedule-wrap { padding: 4px 2px 0; }
+.schedule-table {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+.schedule-header,
+.schedule-row {
+  display: grid;
+  grid-template-columns: 32px 1fr 1fr 60px 36px;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+.schedule-header {
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.schedule-row + .schedule-row { border-top: 1px solid var(--border); }
+.schedule-row input { padding: 4px 6px; font-size: 13px; }
+.schedule-row button { padding: 2px 8px; font-size: 14px; line-height: 1; }
+
+.schedule-preview {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--bg);
+  margin-bottom: 8px;
+}
+.schedule-preview svg { display: block; }
+
+/* Power profile chart */
+.power-graph .chart-svg {
+  display: block;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.kw-charge { color: var(--green); }
+.kw-discharge { color: var(--yellow); }

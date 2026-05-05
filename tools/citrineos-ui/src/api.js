@@ -50,6 +50,7 @@ export async function listTransactions(stationId) {
   const query = `
     query ${args} {
       Transactions${where} {
+        id
         transactionId
         stationId
         Evse {
@@ -72,6 +73,7 @@ export async function listTransactions(stationId) {
     const simple = `
       query ${args} {
         Transactions${where} {
+          id
           transactionId
           stationId
           isActive
@@ -83,6 +85,25 @@ export async function listTransactions(stationId) {
     const data = await gql(simple, stationId ? { s: stationId } : undefined);
     return data.Transactions || [];
   }
+}
+
+/** Fetch raw MeterValue rows for a transaction (by integer DB id), newest first. */
+export async function listMeterValues(transactionDatabaseId, limit = 500) {
+  const data = await gql(
+    `query ($t: Int!, $limit: Int!) {
+       MeterValues(
+         where: { transactionDatabaseId: { _eq: $t } },
+         order_by: { timestamp: asc },
+         limit: $limit
+       ) {
+         id
+         timestamp
+         sampledValue
+       }
+     }`,
+    { t: transactionDatabaseId, limit },
+  );
+  return data.MeterValues || [];
 }
 
 export async function getLatestActiveTransaction(stationId) {
@@ -207,15 +228,37 @@ export function updateDynamicSchedule(stationId, chargingProfileId, scheduleUpda
  *  to A means the slider value lands at the EV without conversion.
  */
 export function buildDynamicProfile({ id, stackLevel, transactionId, setpoint, maxCharge, maxDischarge }) {
-  const period = {
-    startPeriod: 0,
-    limit: maxCharge,
-    setpoint,
-    operationMode: 'CentralSetpoint',
-  };
-  if (maxDischarge !== undefined && maxDischarge !== null) {
-    period.dischargeLimit = -Math.abs(maxDischarge);
-  }
+  return buildScheduleProfile({
+    id,
+    stackLevel,
+    transactionId,
+    periods: [{ startPeriod: 0, setpoint }],
+    maxCharge,
+    maxDischarge,
+  });
+}
+
+/** Build a TxProfile with one or more schedule periods.
+ *  Each period: { startPeriod (s, integer offset from startSchedule), setpoint (A, signed) }.
+ *  All periods get the same maxCharge/maxDischarge limits and operationMode=CentralSetpoint
+ *  so libocpp can still treat the profile as dynamic-capable.
+ */
+export function buildScheduleProfile({ id, stackLevel, transactionId, periods, maxCharge, maxDischarge }) {
+  const sched = periods
+    .slice()
+    .sort((a, b) => a.startPeriod - b.startPeriod)
+    .map((p) => {
+      const out = {
+        startPeriod: Math.max(0, Math.round(p.startPeriod)),
+        limit: maxCharge,
+        setpoint: p.setpoint,
+        operationMode: 'CentralSetpoint',
+      };
+      if (maxDischarge !== undefined && maxDischarge !== null) {
+        out.dischargeLimit = -Math.abs(maxDischarge);
+      }
+      return out;
+    });
   return {
     id,
     stackLevel,
@@ -227,7 +270,7 @@ export function buildDynamicProfile({ id, stackLevel, transactionId, setpoint, m
         id,
         startSchedule: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
         chargingRateUnit: 'A',
-        chargingSchedulePeriod: [period],
+        chargingSchedulePeriod: sched,
       },
     ],
   };

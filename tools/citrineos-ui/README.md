@@ -7,9 +7,13 @@ Lightweight React UI for testing OCPP 2.1 Bidirectional Power Transfer with Citr
 - Station selector (auto-defaults to first online station, refreshes every 3 s)
 - Start Transaction modal with sane defaults (`DEADBEEF` / `Central` / `evseId=1`)
 - Stop Transaction button
-- BPT setpoint slider: -maxDischargePower..+maxChargePower
-  - First slider use: sends `SetChargingProfile` with `operationMode: CentralSetpoint` to establish a dynamic-capable profile
-  - Subsequent changes: debounced `UpdateDynamicSchedule` (300 ms)
+- BPT control with two modes (tabs):
+  - **Setpoint** — slider from -maxDischarge..+maxCharge Amperes
+    - First use: sends `SetChargingProfile` with `operationMode: CentralSetpoint` to establish a dynamic-capable profile
+    - Subsequent changes: debounced `UpdateDynamicSchedule` (300 ms)
+  - **Schedule** — multi-period editor (`startPeriod` seconds + signed setpoint Amperes per row)
+    - "Apply" sends a fresh `SetChargingProfile` with all periods at a higher stackLevel so it supersedes the prior profile
+- Power profile graph (auto-refresh 3 s) — net power vs. time from the active transaction's `MeterValues`, derived from `Power.Active.Import/Export` (or `Current.*` if power is not reported)
 
 ## Run
 
