@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 Phase: 03
 Plan: Not started
 Status: Phase complete — ready for verification
-Last activity: 2026-05-07 - Completed quick task 260507-dkh: Implement OCPP 2.1 V2X allowedEnergyTransfer support
+Last activity: 2026-05-07 - Completed quick task 260507-ez6: Add V2X policy to Authorization model and Allow V2X toggle button to BPT Console
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -90,6 +90,7 @@ None yet.
 | 260429-ixg | Wire Hubject credentials through env vars instead of config.json                                                      | 2026-04-29 | `42ba682a` | [260429-ixg-wire-hubject-credentials-through-env-var](./quick/260429-ixg-wire-hubject-credentials-through-env-var/) |
 | 260429-jn5 | Add Hubject BASEURL env-var passthrough to docker-compose                                                             | 2026-04-29 | `4d8b0ba8` | [260429-jn5-add-hubject-baseurl-env-var-passthrough-](./quick/260429-jn5-add-hubject-baseurl-env-var-passthrough-/) |
 | 260507-dkh | Implement OCPP 2.1 V2X allowedEnergyTransfer support                                                                  | 2026-05-07 | `538561b9` | [260507-dkh-implement-ocpp-2-1-v2x-allowedenergytran](./quick/260507-dkh-implement-ocpp-2-1-v2x-allowedenergytran/) |
+| 260507-ez6 | Add V2X policy to Authorization model and Allow V2X toggle button to BPT Console                                      | 2026-05-07 | `d9fe97fa` | [260507-ez6-add-v2x-policy-to-authorization-model-an](./quick/260507-ez6-add-v2x-policy-to-authorization-model-an/) |
 
 ## Session Continuity
 
