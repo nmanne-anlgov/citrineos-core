@@ -48,6 +48,7 @@ select_permissions:
     permission:
       columns:
         - allowedConnectorTypes
+        - allowedEnergyTransfer
         - disallowedEvseIdPrefixes
         - id
         - idToken

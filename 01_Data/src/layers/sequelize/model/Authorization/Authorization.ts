@@ -36,6 +36,9 @@ export class Authorization extends Model implements AuthorizationDto {
   @Column(DataType.ARRAY(DataType.STRING))
   declare disallowedEvseIdPrefixes?: string[];
 
+  @Column(DataType.ARRAY(DataType.STRING))
+  declare allowedEnergyTransfer?: string[] | null;
+
   @Column({
     type: DataType.CITEXT,
     unique: 'idToken_type',
