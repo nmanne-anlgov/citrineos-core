@@ -330,6 +330,36 @@ export class TransactionsModule extends AbstractModule {
       );
     }
 
+    // OCPP 2.1 V2X: persist EVCCID (from idToken.additionalInfo) + default allowedEnergyTransfer
+    // on transaction Start. EIM (Central) sessions carry EVCCID in additionalInfo.
+    if (
+      transaction &&
+      transactionEvent.eventType === OCPP2_1.TransactionEventEnumType.Started
+    ) {
+      const updates: Partial<Transaction> = {
+        allowedEnergyTransfer: ['DC'],
+      };
+      const idToken = transactionEvent.idToken;
+      if (
+        idToken &&
+        idToken.type === OCPP2_0_1.IdTokenEnumType.Central &&
+        idToken.additionalInfo
+      ) {
+        const evccEntry = idToken.additionalInfo.find(
+          (info: any) => info.type === 'EVCCID',
+        );
+        if (evccEntry?.additionalIdToken) {
+          updates.evccId = evccEntry.additionalIdToken;
+        }
+      }
+      await this._transactionEventRepository.updateTransactionByStationIdAndTransactionId(
+        tenantId,
+        updates,
+        transactionId,
+        stationId,
+      );
+    }
+
     if (response) {
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
       this._logger.debug('Transaction response sent: ', messageConfirmation);

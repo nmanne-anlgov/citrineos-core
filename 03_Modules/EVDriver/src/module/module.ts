@@ -288,6 +288,17 @@ export class EVDriverModule extends AbstractModule {
       },
     };
 
+    // OCPP 2.1: when Accepted, advertise allowed energy transfer modes for V2X.
+    // Defaults to ["DC"]; later phases may compute this per-Authorization.
+    const is21 = message.protocol === OCPPVersion.OCPP2_1;
+    const applyAet = (r: OCPP2_0_1.AuthorizeResponse) => {
+      if (is21 && r.idTokenInfo.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
+        (r as unknown as OCPP2_1.AuthorizeResponse).allowedEnergyTransfer = [
+          OCPP2_1.EnergyTransferModeEnumType.DC,
+        ];
+      }
+    };
+
     // Validate ID token format after AJV schema validation, checking if the token conforms to expected type e.g if type is ISO14443, the token should be a hex string of even length
     const tokenValidation = validateIdToken(request.idToken.type, request.idToken.idToken);
     if (!tokenValidation.isValid) {
@@ -310,6 +321,7 @@ export class EVDriverModule extends AbstractModule {
 
     if (message.payload.idToken.type === OCPP2_0_1.IdTokenEnumType.NoAuthorization) {
       response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
+      applyAet(response);
       await this.sendCallResultWithMessage(message, response);
       return;
     }
@@ -331,6 +343,7 @@ export class EVDriverModule extends AbstractModule {
         ) {
           response.certificateStatus = OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted;
           response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
+          applyAet(response);
           const messageConfirmation = await this.sendCallResultWithMessage(message, response);
           this._logger.debug('Authorize response sent (eMAID cached):', messageConfirmation);
           return;
@@ -354,6 +367,7 @@ export class EVDriverModule extends AbstractModule {
       }
       if (response.certificateStatus !== OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted) {
         response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Invalid;
+        applyAet(response);
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
         this._logger.debug('Authorize response sent:', messageConfirmation);
         return;
@@ -389,6 +403,7 @@ export class EVDriverModule extends AbstractModule {
           });
         }
         response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
+        applyAet(response);
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
         this._logger.debug('Authorize response sent:', messageConfirmation);
         return;
@@ -507,6 +522,7 @@ export class EVDriverModule extends AbstractModule {
       }
     } else {
       // Status is Unknown if no authorization found
+      applyAet(response);
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
       this._logger.debug('Authorize response sent:', messageConfirmation);
       return;
@@ -553,6 +569,7 @@ export class EVDriverModule extends AbstractModule {
       }
     }
 
+    applyAet(response);
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('Authorize response sent:', messageConfirmation);
   }
