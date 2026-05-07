@@ -4,6 +4,9 @@ set -e
 # Default to migrate if DB_STRATEGY is not set
 DB_STRATEGY=${DB_STRATEGY:-migrate}
 
+echo "Building application..."
+npm run build
+
 echo "Executing DB strategy: $DB_STRATEGY"
 
 if [ "$DB_STRATEGY" = "migrate" ]; then
