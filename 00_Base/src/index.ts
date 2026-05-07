@@ -272,6 +272,7 @@ export const OCPP2_1_CALL_SCHEMA_RECORD: Record<string, object> = {
   [OCPP_CallAction.InstallCertificate]: OCPP2_1.InstallCertificateRequestSchema,
   [OCPP_CallAction.LogStatusNotification]: OCPP2_1.LogStatusNotificationRequestSchema,
   [OCPP_CallAction.MeterValues]: OCPP2_1.MeterValuesRequestSchema,
+  [OCPP_CallAction.NotifyAllowedEnergyTransfer]: OCPP2_1.NotifyAllowedEnergyTransferRequestSchema,
   [OCPP_CallAction.NotifyChargingLimit]: OCPP2_1.NotifyChargingLimitRequestSchema,
   [OCPP_CallAction.NotifyCustomerInformation]: OCPP2_1.NotifyCustomerInformationRequestSchema,
 
