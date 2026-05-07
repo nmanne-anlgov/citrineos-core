@@ -398,7 +398,14 @@ export const OCPPInterfaceEnumSchema = z.enum([
 
 export const OCPPTransportEnumSchema = z.enum(['JSON', 'SOAP']);
 
-export const OCPPVersionEnumSchema = z.enum(['OCPP12', 'OCPP15', 'OCPP16', 'OCPP20']);
+export const OCPPVersionEnumSchema = z.enum([
+  'OCPP12',
+  'OCPP15',
+  'OCPP16',
+  'OCPP20',
+  'OCPP201',
+  'OCPP21',
+]);
 
 export const PhaseEnumSchema = z.enum([
   'L1',
