@@ -14,6 +14,7 @@ import {
   DEFAULT_TENANT_ID,
   getOcpp2Schema,
   OCPP2_0_1,
+  OCPP2_1,
   OCPP2_request_types,
   OCPP_CallAction,
   OCPPVersion,
@@ -180,6 +181,62 @@ export class EVDriverOcpp2Api
       request,
       callbackUrl,
     );
+  }
+
+  @AsMessageEndpoint(
+    OCPP_CallAction.NotifyAllowedEnergyTransfer,
+    () => OCPP2_1.NotifyAllowedEnergyTransferRequestSchema,
+  )
+  async notifyAllowedEnergyTransfer(
+    identifier: string[],
+    request: OCPP2_1.NotifyAllowedEnergyTransferRequest,
+    callbackUrl?: string,
+    tenantId: number = DEFAULT_TENANT_ID,
+  ): Promise<IMessageConfirmation[]> {
+    const results: IMessageConfirmation[] = [];
+
+    for (const stationId of identifier) {
+      // 1. Persist the new allowed modes BEFORE notifying the station, so the
+      //    DB reflects CSMS intent even if the station is offline / send fails.
+      try {
+        await this._module.transactionEventRepository.updateTransactionByStationIdAndTransactionId(
+          tenantId,
+          { allowedEnergyTransfer: request.allowedEnergyTransfer as string[] },
+          request.transactionId,
+          stationId,
+        );
+      } catch (error) {
+        this._logger.error(
+          `Failed to update transaction ${request.transactionId} on ${stationId} with allowedEnergyTransfer:`,
+          error,
+        );
+        results.push({
+          success: false,
+          payload: error instanceof Error ? error.message : JSON.stringify(error),
+        });
+        continue;
+      }
+
+      // 2. Send the OCPP 2.1 NotifyAllowedEnergyTransfer call to the station.
+      try {
+        const confirmation = await this._module.sendCall(
+          stationId,
+          tenantId,
+          OCPPVersion.OCPP2_1,
+          OCPP_CallAction.NotifyAllowedEnergyTransfer,
+          request,
+          callbackUrl,
+        );
+        results.push(confirmation);
+      } catch (error) {
+        results.push({
+          success: false,
+          payload: error instanceof Error ? error.message : JSON.stringify(error),
+        });
+      }
+    }
+
+    return results;
   }
 
   @AsMessageEndpoint(OCPP_CallAction.CancelReservation, (instance: EVDriverOcpp2Api) =>
