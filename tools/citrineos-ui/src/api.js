@@ -24,7 +24,11 @@ async function postOcpp(module, version, action, stationId, body) {
   });
   const text = await resp.text();
   let parsed;
-  try { parsed = JSON.parse(text); } catch { parsed = text; }
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    parsed = text;
+  }
   if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${text}`);
   return parsed;
 }
@@ -59,6 +63,7 @@ export async function listTransactions(stationId) {
         isActive
         chargingState
         stoppedReason
+        allowedEnergyTransfer
         totalKwh
         createdAt
         updatedAt
@@ -78,6 +83,7 @@ export async function listTransactions(stationId) {
           stationId
           isActive
           stoppedReason
+          allowedEnergyTransfer
           createdAt
         }
       }
@@ -208,6 +214,13 @@ export function requestStopTransaction(stationId, transactionId, version = '2.1'
   return postOcpp('evdriver', version, 'requestStopTransaction', stationId, { transactionId });
 }
 
+export function notifyAllowedEnergyTransfer(stationId, transactionId, modes) {
+  return postOcpp('evdriver', '2.1', 'notifyAllowedEnergyTransfer', stationId, {
+    transactionId,
+    allowedEnergyTransfer: modes,
+  });
+}
+
 export function setChargingProfile(stationId, evseId, profile, version = '2.1') {
   return postOcpp('smartcharging', version, 'setChargingProfile', stationId, {
     evseId,
@@ -215,7 +228,12 @@ export function setChargingProfile(stationId, evseId, profile, version = '2.1') 
   });
 }
 
-export function updateDynamicSchedule(stationId, chargingProfileId, scheduleUpdate, version = '2.1') {
+export function updateDynamicSchedule(
+  stationId,
+  chargingProfileId,
+  scheduleUpdate,
+  version = '2.1',
+) {
   return postOcpp('smartcharging', version, 'updateDynamicSchedule', stationId, {
     chargingProfileId,
     scheduleUpdate,
@@ -227,7 +245,14 @@ export function updateDynamicSchedule(stationId, chargingProfileId, scheduleUpda
  *  (depends on EV-negotiated nominal voltage), so values get silently rescaled. Sticking
  *  to A means the slider value lands at the EV without conversion.
  */
-export function buildDynamicProfile({ id, stackLevel, transactionId, setpoint, maxCharge, maxDischarge }) {
+export function buildDynamicProfile({
+  id,
+  stackLevel,
+  transactionId,
+  setpoint,
+  maxCharge,
+  maxDischarge,
+}) {
   return buildScheduleProfile({
     id,
     stackLevel,
@@ -243,7 +268,14 @@ export function buildDynamicProfile({ id, stackLevel, transactionId, setpoint, m
  *  All periods get the same maxCharge/maxDischarge limits and operationMode=CentralSetpoint
  *  so libocpp can still treat the profile as dynamic-capable.
  */
-export function buildScheduleProfile({ id, stackLevel, transactionId, periods, maxCharge, maxDischarge }) {
+export function buildScheduleProfile({
+  id,
+  stackLevel,
+  transactionId,
+  periods,
+  maxCharge,
+  maxDischarge,
+}) {
   const sched = periods
     .slice()
     .sort((a, b) => a.startPeriod - b.startPeriod)

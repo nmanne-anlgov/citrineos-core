@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   getLatestActiveTransaction,
   listStations,
+  notifyAllowedEnergyTransfer,
   requestStartTransaction,
   requestStopTransaction,
 } from './api.js';
@@ -74,8 +75,10 @@ export default function App() {
     try {
       const result = await requestStartTransaction(stationId, opts);
       const r0 = Array.isArray(result) ? result[0] : result;
-      showToast(`RequestStartTransaction → ${r0?.success ? 'sent' : JSON.stringify(r0)}`,
-        r0?.success ? 'success' : 'error');
+      showToast(
+        `RequestStartTransaction → ${r0?.success ? 'sent' : JSON.stringify(r0)}`,
+        r0?.success ? 'success' : 'error',
+      );
       setShowModal(false);
       setTimeout(refresh, 500);
     } catch (err) {
@@ -91,8 +94,33 @@ export default function App() {
     try {
       const result = await requestStopTransaction(stationId, activeTx.transactionId);
       const r0 = Array.isArray(result) ? result[0] : result;
-      showToast(`RequestStopTransaction → ${r0?.success ? 'sent' : JSON.stringify(r0)}`,
-        r0?.success ? 'success' : 'error');
+      showToast(
+        `RequestStopTransaction → ${r0?.success ? 'sent' : JSON.stringify(r0)}`,
+        r0?.success ? 'success' : 'error',
+      );
+      setTimeout(refresh, 500);
+    } catch (err) {
+      showToast(`Error: ${err.message}`, 'error');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onToggleV2x = async () => {
+    if (!stationId || !activeTx) return;
+    const allowed = Array.isArray(activeTx.allowedEnergyTransfer)
+      ? activeTx.allowedEnergyTransfer
+      : [];
+    const enabling = !allowed.includes('DC_BPT');
+    const modes = enabling ? ['DC', 'DC_BPT'] : ['DC'];
+    setBusy(true);
+    try {
+      const result = await notifyAllowedEnergyTransfer(stationId, activeTx.transactionId, modes);
+      const r0 = Array.isArray(result) ? result[0] : result;
+      showToast(
+        `${enabling ? 'Allow' : 'Revoke'} V2X → ${r0?.success ? 'sent' : JSON.stringify(r0)}`,
+        r0?.success ? 'success' : 'error',
+      );
       setTimeout(refresh, 500);
     } catch (err) {
       showToast(`Error: ${err.message}`, 'error');
@@ -115,7 +143,8 @@ export default function App() {
               {station.isOnline ? 'online' : 'offline'}
             </span>
             <span style={{ marginLeft: 8 }}>
-              {station.protocol || '?'} · {station.chargePointVendor || '?'} {station.chargePointModel || ''}
+              {station.protocol || '?'} · {station.chargePointVendor || '?'}{' '}
+              {station.chargePointModel || ''}
             </span>
           </div>
         )}
@@ -129,12 +158,22 @@ export default function App() {
               <div className="id">{activeTx.transactionId}</div>
               <div className="muted" style={{ marginTop: 4 }}>
                 {activeTx.chargingState || '?'}
-                {activeTx.totalKwh != null ? ` · ${activeTx.totalKwh.toFixed?.(3) ?? activeTx.totalKwh} kWh` : ''}
+                {activeTx.totalKwh != null
+                  ? ` · ${activeTx.totalKwh.toFixed?.(3) ?? activeTx.totalKwh} kWh`
+                  : ''}
               </div>
             </div>
-            <button className="danger" onClick={onStop} disabled={busy} style={{ width: 'auto' }}>
-              Stop
-            </button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={onToggleV2x} disabled={busy} style={{ width: 'auto' }}>
+                {Array.isArray(activeTx.allowedEnergyTransfer) &&
+                activeTx.allowedEnergyTransfer.includes('DC_BPT')
+                  ? 'Revoke V2X'
+                  : 'Allow V2X'}
+              </button>
+              <button className="danger" onClick={onStop} disabled={busy} style={{ width: 'auto' }}>
+                Stop
+              </button>
+            </div>
           </div>
         ) : (
           <div className="row">
@@ -177,9 +216,7 @@ export default function App() {
         />
       )}
 
-      {toast && (
-        <div className={`toast ${toast.level}`}>{toast.msg}</div>
-      )}
+      {toast && <div className={`toast ${toast.level}`}>{toast.msg}</div>}
     </div>
   );
 }
