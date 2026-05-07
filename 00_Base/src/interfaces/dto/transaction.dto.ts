@@ -45,6 +45,8 @@ export const TransactionSchema = BaseSchema.extend({
   startTime: z.iso.datetime().optional(),
   endTime: z.iso.datetime().optional(),
   customData: z.any().nullable().optional(),
+  allowedEnergyTransfer: z.array(z.string()).nullable().optional(),
+  evccId: z.string().nullable().optional(),
 });
 
 export const TransactionProps = TransactionSchema.keyof().enum;

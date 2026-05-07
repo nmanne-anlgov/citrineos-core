@@ -156,6 +156,12 @@ export class Transaction extends Model implements TransactionDto {
   @Column(DataType.JSONB)
   declare customData?: any | null;
 
+  @Column(DataType.JSONB)
+  declare allowedEnergyTransfer?: string[] | null;
+
+  @Column(DataType.STRING)
+  declare evccId?: string | null;
+
   @ForeignKey(() => Tenant)
   @Column({
     type: DataType.INTEGER,
