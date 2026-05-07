@@ -83,7 +83,6 @@ export async function listTransactions(stationId) {
           stationId
           isActive
           stoppedReason
-          allowedEnergyTransfer
           createdAt
         }
       }
