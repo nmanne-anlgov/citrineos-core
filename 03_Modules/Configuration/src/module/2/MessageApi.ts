@@ -78,14 +78,14 @@ export class ConfigurationOcpp2Api
       const websocketServerConfigId =
         extraQueries[SetNetworkProfileExtraQuerystrings.websocketServerConfigId];
       await SetNetworkProfile.build({
-        stationId: identifier,
+        stationId: identifier[0],
         tenantId,
         correlationId,
         configurationSlot: request.configurationSlot,
         websocketServerConfigId,
-        apn: JSON.stringify(request.connectionData.apn),
-        vpn: JSON.stringify(request.connectionData.vpn),
         ...request.connectionData,
+        apn: request.connectionData.apn ? JSON.stringify(request.connectionData.apn) : undefined,
+        vpn: request.connectionData.vpn ? JSON.stringify(request.connectionData.vpn) : undefined,
       }).save();
     }
 
