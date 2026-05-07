@@ -289,13 +289,15 @@ export class EVDriverModule extends AbstractModule {
     };
 
     // OCPP 2.1: when Accepted, advertise allowed energy transfer modes for V2X.
-    // Defaults to ["DC"]; later phases may compute this per-Authorization.
+    // Reads from the Authorization row (per-token policy); falls back to ["DC"] when no
+    // Authorization is available (e.g. NoAuthorization branch, Unknown idToken).
     const is21 = message.protocol === OCPPVersion.OCPP2_1;
-    const applyAet = (r: OCPP2_0_1.AuthorizeResponse) => {
+    const applyAet = (r: OCPP2_0_1.AuthorizeResponse, auth?: Authorization | null) => {
       if (is21 && r.idTokenInfo.status === OCPP2_0_1.AuthorizationStatusEnumType.Accepted) {
-        (r as unknown as OCPP2_1.AuthorizeResponse).allowedEnergyTransfer = [
-          OCPP2_1.EnergyTransferModeEnumType.DC,
-        ];
+        (r as unknown as OCPP2_1.AuthorizeResponse).allowedEnergyTransfer =
+          (auth?.allowedEnergyTransfer as
+            | [OCPP2_1.EnergyTransferModeEnumType, ...OCPP2_1.EnergyTransferModeEnumType[]]
+            | undefined) ?? [OCPP2_1.EnergyTransferModeEnumType.DC];
       }
     };
 
@@ -321,7 +323,7 @@ export class EVDriverModule extends AbstractModule {
 
     if (message.payload.idToken.type === OCPP2_0_1.IdTokenEnumType.NoAuthorization) {
       response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
-      applyAet(response);
+      applyAet(response, undefined);
       await this.sendCallResultWithMessage(message, response);
       return;
     }
@@ -343,7 +345,7 @@ export class EVDriverModule extends AbstractModule {
         ) {
           response.certificateStatus = OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted;
           response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
-          applyAet(response);
+          applyAet(response, cached);
           const messageConfirmation = await this.sendCallResultWithMessage(message, response);
           this._logger.debug('Authorize response sent (eMAID cached):', messageConfirmation);
           return;
@@ -367,7 +369,7 @@ export class EVDriverModule extends AbstractModule {
       }
       if (response.certificateStatus !== OCPP2_0_1.AuthorizeCertificateStatusEnumType.Accepted) {
         response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Invalid;
-        applyAet(response);
+        applyAet(response, undefined);
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
         this._logger.debug('Authorize response sent:', messageConfirmation);
         return;
@@ -375,10 +377,14 @@ export class EVDriverModule extends AbstractModule {
 
       // OCSP passed — persist the eMAID so the next authorization uses the cache above.
       if (request.idToken.type === OCPP2_0_1.IdTokenEnumType.eMAID) {
-        const existing = await this._authorizeRepository.readOnlyOneByQuerystring(context.tenantId, {
-          idToken: request.idToken.idToken,
-          type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(request.idToken.type),
-        });
+        const existing = await this._authorizeRepository.readOnlyOneByQuerystring(
+          context.tenantId,
+          {
+            idToken: request.idToken.idToken,
+            type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(request.idToken.type),
+          },
+        );
+        let persisted: Authorization | null | undefined = existing;
         if (!existing) {
           const newAuth = Authorization.build({
             idToken: request.idToken.idToken,
@@ -387,14 +393,18 @@ export class EVDriverModule extends AbstractModule {
             ),
             status: OCPP2_0_1.AuthorizationStatusEnumType.Accepted,
             cacheExpiryDateTime: ocspNextUpdate,
+            allowedEnergyTransfer: ['DC', 'DC_BPT'],
             tenantId: context.tenantId,
           });
-          await this._authorizeRepository.create(context.tenantId, newAuth).catch((err: unknown) => {
-            this._logger.error('Failed to persist eMAID authorization:', err);
-          });
+          await this._authorizeRepository
+            .create(context.tenantId, newAuth)
+            .catch((err: unknown) => {
+              this._logger.error('Failed to persist eMAID authorization:', err);
+            });
           this._logger.info(
             `Persisted new eMAID authorization: ${request.idToken.idToken}, cache expires: ${ocspNextUpdate ?? 'never'}`,
           );
+          persisted = newAuth;
         } else {
           // Update cacheExpiryDateTime so the cached entry stays fresh after re-validation.
           existing.cacheExpiryDateTime = ocspNextUpdate;
@@ -403,7 +413,7 @@ export class EVDriverModule extends AbstractModule {
           });
         }
         response.idTokenInfo.status = OCPP2_0_1.AuthorizationStatusEnumType.Accepted;
-        applyAet(response);
+        applyAet(response, persisted);
         const messageConfirmation = await this.sendCallResultWithMessage(message, response);
         this._logger.debug('Authorize response sent:', messageConfirmation);
         return;
@@ -522,7 +532,7 @@ export class EVDriverModule extends AbstractModule {
       }
     } else {
       // Status is Unknown if no authorization found
-      applyAet(response);
+      applyAet(response, undefined);
       const messageConfirmation = await this.sendCallResultWithMessage(message, response);
       this._logger.debug('Authorize response sent:', messageConfirmation);
       return;
@@ -569,7 +579,7 @@ export class EVDriverModule extends AbstractModule {
       }
     }
 
-    applyAet(response);
+    applyAet(response, authorization);
     const messageConfirmation = await this.sendCallResultWithMessage(message, response);
     this._logger.debug('Authorize response sent:', messageConfirmation);
   }

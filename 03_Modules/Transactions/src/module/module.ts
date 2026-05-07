@@ -45,6 +45,7 @@ import {
   Authorization,
   Component,
   OCPP1_6_Mapper,
+  OCPP2_0_1_Mapper,
   sequelize,
   SequelizeOCPPMessageRepository,
   SequelizeRepository,
@@ -330,24 +331,23 @@ export class TransactionsModule extends AbstractModule {
       );
     }
 
-    // OCPP 2.1 V2X: persist EVCCID (from idToken.additionalInfo) + default allowedEnergyTransfer
-    // on transaction Start. EIM (Central) sessions carry EVCCID in additionalInfo.
-    if (
-      transaction &&
-      transactionEvent.eventType === OCPP2_1.TransactionEventEnumType.Started
-    ) {
-      const updates: Partial<Transaction> = {
-        allowedEnergyTransfer: ['DC'],
-      };
+    // OCPP 2.1 V2X: persist EVCCID (from idToken.additionalInfo) + seed allowedEnergyTransfer
+    // from the per-Authorization policy on transaction Start. EIM (Central) sessions carry
+    // EVCCID in additionalInfo.
+    if (transaction && transactionEvent.eventType === OCPP2_1.TransactionEventEnumType.Started) {
+      let auth: Authorization | undefined;
       const idToken = transactionEvent.idToken;
-      if (
-        idToken &&
-        idToken.type === OCPP2_0_1.IdTokenEnumType.Central &&
-        idToken.additionalInfo
-      ) {
-        const evccEntry = idToken.additionalInfo.find(
-          (info: any) => info.type === 'EVCCID',
-        );
+      if (idToken) {
+        auth = await this._authorizeRepository.readOnlyOneByQuerystring(tenantId, {
+          idToken: idToken.idToken,
+          type: OCPP2_0_1_Mapper.AuthorizationMapper.fromIdTokenEnumType(idToken.type),
+        });
+      }
+      const updates: Partial<Transaction> = {
+        allowedEnergyTransfer: auth?.allowedEnergyTransfer ?? ['DC'],
+      };
+      if (idToken && idToken.type === OCPP2_0_1.IdTokenEnumType.Central && idToken.additionalInfo) {
+        const evccEntry = idToken.additionalInfo.find((info: any) => info.type === 'EVCCID');
         if (evccEntry?.additionalIdToken) {
           updates.evccId = evccEntry.additionalIdToken;
         }
