@@ -97,6 +97,7 @@ const ocpp2_1_schemas: Record<string, AnySchemaObject> = {
   CostUpdatedRequestSchema: OCPP2_1.CostUpdatedRequestSchema,
   GetTransactionStatusRequestSchema: OCPP2_1.GetTransactionStatusRequestSchema,
   UpdateDynamicScheduleRequestSchema: OCPP2_1.UpdateDynamicScheduleRequestSchema,
+  NotifyAllowedEnergyTransferRequestSchema: OCPP2_1.NotifyAllowedEnergyTransferRequestSchema,
 };
 
 const OCPP2_SCHEMA_RECORD: SchemaRecord = {
