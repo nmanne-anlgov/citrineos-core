@@ -173,7 +173,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module.sendCall.bind(this._module),
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -277,7 +277,7 @@ export class EVDriverOcpp2Api
 
       // Send the CancelReservation call for each station
       return packageGroupCall(
-        this._module.sendCall,
+        this._module.sendCall.bind(this._module),
         identifiers,
         tenantId,
         this._ocppVersion ?? DEFAULT_VERSION,
@@ -366,7 +366,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module.sendCall.bind(this._module),
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -389,7 +389,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module.sendCall.bind(this._module),
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -459,7 +459,7 @@ export class EVDriverOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module.sendCall.bind(this._module),
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,

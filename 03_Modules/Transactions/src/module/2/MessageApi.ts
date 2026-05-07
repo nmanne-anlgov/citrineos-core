@@ -56,7 +56,7 @@ export class TransactionsOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module.sendCall.bind(this._module),
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
@@ -79,7 +79,7 @@ export class TransactionsOcpp2Api
     tenantId: number = DEFAULT_TENANT_ID,
   ): Promise<IMessageConfirmation[]> {
     return packageGroupCall(
-      this._module.sendCall,
+      this._module.sendCall.bind(this._module),
       identifier,
       tenantId,
       this._ocppVersion ?? DEFAULT_VERSION,
