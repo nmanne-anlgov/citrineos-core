@@ -42,6 +42,7 @@ import {
   ChargingStationSequence,
   CompositeSchedule,
   Connector,
+  CertificateRotationAttempt,
   DeleteCertificateAttempt,
   EvseType,
   InstallCertificateAttempt,
@@ -430,6 +431,8 @@ export interface IInstallCertificateAttemptRepository
   extends CrudRepository<InstallCertificateAttempt> {}
 export interface IDeleteCertificateAttemptRepository
   extends CrudRepository<DeleteCertificateAttempt> {}
+export interface ICertificateRotationAttemptRepository
+  extends CrudRepository<CertificateRotationAttempt> {}
 
 export interface IChargingProfileRepository extends CrudRepository<ChargingProfile> {
   createOrUpdateChargingProfile(

@@ -24,6 +24,7 @@ export type {
 export {
   GenerateCertificateChainSchema,
   InstallRootCertificateSchema,
+  RotateCsmsRootCertificateSchema,
   UploadExistingCertificateSchema,
   RegenerateInstalledCertificateSchema,
 } from './queries/RootCertificate.js';
@@ -70,3 +71,4 @@ export { InstallRootCertificateRequest } from './dtos/InstallRootCertificateRequ
 export { TlsCertificatesRequest } from './dtos/TlsCertificatesRequest.js';
 export { UploadExistingCertificate } from './dtos/UploadExistingCertificate.js';
 export { RegenerateExistingCertificate } from './dtos/RegenerateExistingCertificate.js';
+export { RotateCsmsRootCertificateRequest } from './dtos/RotateCsmsRootCertificateRequest.js';

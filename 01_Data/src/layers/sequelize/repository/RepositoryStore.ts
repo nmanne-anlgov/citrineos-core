@@ -5,6 +5,7 @@ import type {
   IAuthorizationRepository,
   IBootRepository,
   ICertificateRepository,
+  ICertificateRotationAttemptRepository,
   IChangeConfigurationRepository,
   IChargingProfileRepository,
   IChargingStationSequenceRepository,
@@ -53,6 +54,7 @@ import { SequelizeServerNetworkProfileRepository } from './ServerNetworkProfile.
 import { SequelizeInstalledCertificateRepository } from './InstalledCertificate.js';
 import { SequelizeInstallCertificateAttemptRepository } from './InstallCertificateAttempt.js';
 import { SequelizeDeleteCertificateAttemptRepository } from './DeleteCertificateAttempt.js';
+import { SequelizeCertificateRotationAttemptRepository } from './CertificateRotationAttempt.js';
 
 export class RepositoryStore {
   sequelizeInstance: Sequelize;
@@ -62,6 +64,7 @@ export class RepositoryStore {
   installedCertificateRepository: IInstalledCertificateRepository;
   installCertificateAttemptRepository: IInstallCertificateAttemptRepository;
   deleteCertificateAttemptRepository: IDeleteCertificateAttemptRepository;
+  certificateRotationAttemptRepository: ICertificateRotationAttemptRepository;
   changeConfigurationRepository: IChangeConfigurationRepository;
   chargingProfileRepository: IChargingProfileRepository;
   chargingStationSequenceRepository: IChargingStationSequenceRepository;
@@ -104,6 +107,11 @@ export class RepositoryStore {
       sequelizeInstance,
     );
     this.deleteCertificateAttemptRepository = new SequelizeDeleteCertificateAttemptRepository(
+      config,
+      logger,
+      sequelizeInstance,
+    );
+    this.certificateRotationAttemptRepository = new SequelizeCertificateRotationAttemptRepository(
       config,
       logger,
       sequelizeInstance,

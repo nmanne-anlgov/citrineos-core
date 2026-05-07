@@ -71,6 +71,33 @@ export const InstallRootCertificateSchema = QuerySchema('InstallRootCertificateS
     key: 'fileId',
     type: 'string',
   },
+  {
+    key: 'version',
+    type: 'string',
+  },
+]);
+
+export const RotateCsmsRootCertificateSchema = QuerySchema('RotateCsmsRootCertificateSchema', [
+  {
+    key: 'certificateType',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: 'stationId',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: 'tenantId',
+    type: 'number',
+    required: true,
+    defaultValue: String(DEFAULT_TENANT_ID),
+  },
+  {
+    key: 'newCertificateFileId',
+    type: 'string',
+  },
 ]);
 
 export const UploadExistingCertificateSchema = QuerySchema('UploadExistingCertificateSchema', [

@@ -119,6 +119,8 @@ services:
       - 8083:8083
       - 8443:8443
       - 8444:8444
+      - 8445:8445
+      - 8446:8446
       - 9229:9229
       - 8092:8092
       - 10000-10500:10000-10500 # for dynamic websocket servers
@@ -190,6 +192,8 @@ services:
       HASURA_GRAPHQL_DEV_MODE: 'true'
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup, http-log, webhook-log, websocket-log, query-log
       HASURA_GRAPHQL_ENABLE_TELEMETRY: 'false'
+      ## CLI-migrations image boots a temp engine on 9691; default 30s is too tight on WSL2
+      HASURA_GRAPHQL_MIGRATIONS_SERVER_TIMEOUT: '180'
       ## uncomment next line to run console offline (i.e load console assets from server instead of CDN)
       # HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
       ## uncomment next line to set an admin secret - warning, without configuration this will cause upstream services to fail

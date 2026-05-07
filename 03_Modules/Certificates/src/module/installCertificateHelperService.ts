@@ -180,9 +180,46 @@ export class InstallCertificateHelperService {
               existingPendingInstallCertificateAttempt.certificateId;
             installedCertificate.certificateType =
               existingPendingInstallCertificateAttempt.certificateType;
+            installedCertificate.hashAlgorithm = 'SHA256';
+            installedCertificate.issuerNameHash = jsrsasign.KJUR.crypto.Util.hashHex(
+              cert.getIssuerHex(),
+              'sha256',
+            );
+            // Extract SubjectPublicKeyInfo (SPKI) from TBSCertificate — field index 6.
+            // This matches what libevse-security hashes for issuerKeyHash.
+            const tbsHex = jsrsasign.ASN1HEX.getV(cert.hex, 0);
+            const spkiHex = jsrsasign.ASN1HEX.getV(
+              tbsHex,
+              jsrsasign.ASN1HEX.getChildIdx(tbsHex, 0)[6],
+            );
+            installedCertificate.issuerKeyHash = jsrsasign.KJUR.crypto.Util.hashHex(
+              spkiHex,
+              'sha256',
+            );
+            installedCertificate.serialNumber = cert.getSerialNumberHex();
             await installedCertificate.save();
           }
         }
+      } else if (
+        existingPendingInstallCertificateAttempt.status ===
+        OCPP2_0_1.InstallCertificateStatusEnumType.Failed
+      ) {
+        this.logger.warn(
+          'InstallCertificate FAILED for station',
+          stationId,
+          'certificateType',
+          existingPendingInstallCertificateAttempt.certificateType,
+        );
+      } else if (
+        existingPendingInstallCertificateAttempt.status ===
+        OCPP2_0_1.InstallCertificateStatusEnumType.Rejected
+      ) {
+        this.logger.warn(
+          'InstallCertificate REJECTED for station',
+          stationId,
+          'certificateType',
+          existingPendingInstallCertificateAttempt.certificateType,
+        );
       }
     }
   }

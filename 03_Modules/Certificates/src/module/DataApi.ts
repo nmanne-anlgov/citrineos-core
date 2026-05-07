@@ -20,6 +20,8 @@ import {
 } from '@citrineos/base';
 import {
   Certificate,
+  CertificateRotationAttempt,
+  CertificateRotationStatusEnum,
   CountryNameEnumType,
   GenerateCertificateChainRequest,
   GenerateCertificateChainSchema,
@@ -28,6 +30,8 @@ import {
   InstallRootCertificateSchema,
   RegenerateExistingCertificate,
   RegenerateInstalledCertificateSchema,
+  RotateCsmsRootCertificateRequest,
+  RotateCsmsRootCertificateSchema,
   SignatureAlgorithmEnumType,
   TenantQuerySchema,
   type TenantQueryString,
@@ -322,7 +326,7 @@ export class CertificatesDataApi
       rootCAPem = (await this._fileStorage.getFile(installReq.fileId))!.toString();
     } else {
       rootCAPem = await this._module.certificateAuthorityService.getRootCACertificateFromExternalCA(
-        installReq.certificateType,
+        installReq.certificateType as OCPP2_0_1.InstallCertificateUseEnumType,
       );
     }
 
@@ -330,7 +334,7 @@ export class CertificatesDataApi
       .sendCall(
         installReq.stationId,
         installReq.tenantId,
-        OCPPVersion.OCPP2_0_1,
+        installReq.version ?? OCPPVersion.OCPP2_0_1,
         OCPP_CallAction.InstallCertificate,
         {
           certificateType: installReq.certificateType,
@@ -348,6 +352,55 @@ export class CertificatesDataApi
     return {
       success: true,
     };
+  }
+
+  /**
+   * Trigger CSMS root certificate rotation for a single station (FR.09–FR.16).
+   * Creates a CertificateRotationAttempt record and fires GetInstalledCertificateIds to discover
+   * existing certs of the given type. The rotation then advances asynchronously through the
+   * Installing and Deleting states as the station responds to each OCPP message.
+   */
+  @AsDataEndpoint(
+    OCPP2_Namespace.CertificateRotationAttempt,
+    HttpMethod.Post,
+    undefined,
+    RotateCsmsRootCertificateSchema,
+  )
+  async rotateCsmsRootCertificate(
+    request: FastifyRequest<{
+      Body: RotateCsmsRootCertificateRequest;
+    }>,
+  ): Promise<{ rotationId: number; status: string }> {
+    const req = request.body as RotateCsmsRootCertificateRequest;
+    this._logger.info(
+      `Starting ${req.certificateType} root certificate rotation for station ${req.stationId}`,
+    );
+
+    const rotation = new CertificateRotationAttempt();
+    rotation.stationId = req.stationId;
+    rotation.tenantId = req.tenantId;
+    rotation.certificateType = req.certificateType;
+    rotation.newCertificateFileId = req.newCertificateFileId;
+    rotation.status = CertificateRotationStatusEnum.Discovering;
+    rotation.oldCertHashData = [];
+    rotation.pendingDeletes = 0;
+    await rotation.save();
+
+    await this._module
+      .sendCall(
+        req.stationId,
+        req.tenantId,
+        OCPPVersion.OCPP2_0_1,
+        OCPP_CallAction.GetInstalledCertificateIds,
+        { certificateType: [req.certificateType] },
+      )
+      .then((confirmation) => {
+        if (!confirmation.success) {
+          throw new Error(`GetInstalledCertificateIds failed: ${confirmation.payload}`);
+        }
+      });
+
+    return { rotationId: rotation.id, status: rotation.status };
   }
 
   /**

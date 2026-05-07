@@ -69,7 +69,12 @@ export { Tenant } from './model/Tenant.js';
 export { TenantPartner } from './model/TenantPartner.js';
 export type { PaginatedParams } from './model/AsyncJob/index.js';
 export { AsyncJobStatus, AsyncJobStatusDTO, AsyncJobRequest } from './model/AsyncJob/index.js';
-export { DeleteCertificateAttempt, InstallCertificateAttempt } from './model/Certificate/index.js';
+export {
+  DeleteCertificateAttempt,
+  InstallCertificateAttempt,
+  CertificateRotationAttempt,
+  CertificateRotationStatusEnum,
+} from './model/Certificate/index.js';
 
 // Sequelize Repositories
 export { SequelizeRepository } from './repository/Base.js';
@@ -97,6 +102,7 @@ export { SequelizeAsyncJobStatusRepository } from './repository/AsyncJobStatus.j
 export { SequelizeServerNetworkProfileRepository } from './repository/ServerNetworkProfile.js';
 export { SequelizeInstallCertificateAttemptRepository } from './repository/InstallCertificateAttempt.js';
 export { SequelizeDeleteCertificateAttemptRepository } from './repository/DeleteCertificateAttempt.js';
+export { SequelizeCertificateRotationAttemptRepository } from './repository/CertificateRotationAttempt.js';
 
 // Sequelize Utilities
 export { DefaultSequelizeInstance } from './util.js';

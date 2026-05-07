@@ -34,6 +34,7 @@ export enum OCPP2_Namespace {
   InstalledCertificate = 'InstalledCertificate',
   InstallCertificateAttempt = 'InstallCertificateAttempt',
   DeleteCertificateAttempt = 'DeleteCertificateAttempt',
+  CertificateRotationAttempt = 'CertificateRotationAttempt',
   CertificateChain = 'CertificateChain',
   UploadExistingCertificate = 'UploadExistingCertificate',
   RegenerateExistingCertificate = 'RegenerateExistingCertificate',

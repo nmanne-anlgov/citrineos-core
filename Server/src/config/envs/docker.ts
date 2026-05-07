@@ -275,6 +275,56 @@ export function createDockerConfig() {
             dynamicTenantResolution: true,
             maxConnectionsPerTenant: 1,
           },
+          {
+            id: '6',
+            securityProfile: 2,
+            allowUnknownChargingStations: false,
+            pingInterval: 60,
+            host: '0.0.0.0',
+            port: 8445,
+            protocol: 'ocpp2.1',
+            tlsKeyFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/leafKey.pem',
+            ),
+            tlsCertificateChainFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/certChain.pem',
+            ),
+            rootCACertificateFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/rootCertificate.pem',
+            ),
+            tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
+          },
+          {
+            id: '7',
+            securityProfile: 3,
+            allowUnknownChargingStations: false,
+            pingInterval: 60,
+            host: '0.0.0.0',
+            port: 8446,
+            protocol: 'ocpp2.1',
+            tlsKeyFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/leafKey.pem',
+            ),
+            tlsCertificateChainFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/certChain.pem',
+            ),
+            mtlsCertificateAuthorityKeyFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/subCAKey.pem',
+            ),
+            rootCACertificateFilePath: path.resolve(
+              path.dirname(__filename),
+              '../../assets/certificates/rootCertificate.pem',
+            ),
+            tenantId: DEFAULT_TENANT_ID,
+            dynamicTenantResolution: true,
+          },
         ],
       },
       certificateAuthority: {

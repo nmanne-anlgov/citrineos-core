@@ -31,13 +31,20 @@ import {
 } from '@citrineos/base';
 import type {
   ICertificateRepository,
+  ICertificateRotationAttemptRepository,
   IDeleteCertificateAttemptRepository,
   IDeviceModelRepository,
   IInstallCertificateAttemptRepository,
   IInstalledCertificateRepository,
   IOCPPMessageRepository,
 } from '@citrineos/data';
-import { InstalledCertificate, sequelize, SequelizeOCPPMessageRepository } from '@citrineos/data';
+import {
+  CertificateRotationAttempt,
+  CertificateRotationStatusEnum,
+  InstalledCertificate,
+  sequelize,
+  SequelizeOCPPMessageRepository,
+} from '@citrineos/data';
 import {
   CertificateAuthorityService,
   parseCSRForVerification,
@@ -77,6 +84,7 @@ export class CertificatesModule extends AbstractModule {
   protected _installedCertificateRepository: IInstalledCertificateRepository;
   protected _installCertificateAttemptRepository: IInstallCertificateAttemptRepository;
   protected _deleteCertificateAttemptRepository: IDeleteCertificateAttemptRepository;
+  protected _certificateRotationAttemptRepository: ICertificateRotationAttemptRepository;
   protected _ocppMessageRepository: IOCPPMessageRepository;
   protected _certificateAuthorityService: CertificateAuthorityService;
   protected _fileStorage: IFileStorage;
@@ -145,6 +153,7 @@ export class CertificatesModule extends AbstractModule {
     installedCertificateRepository?: IInstalledCertificateRepository,
     installCertificateAttemptRepository?: IInstallCertificateAttemptRepository,
     deleteCertificateAttemptRepository?: IDeleteCertificateAttemptRepository,
+    certificateRotationAttemptRepository?: ICertificateRotationAttemptRepository,
     ocppMessageRepository?: IOCPPMessageRepository,
     certificateAuthorityService?: CertificateAuthorityService,
     installCertificateHelperService?: InstallCertificateHelperService,
@@ -176,6 +185,9 @@ export class CertificatesModule extends AbstractModule {
     this._deleteCertificateAttemptRepository =
       deleteCertificateAttemptRepository ||
       new sequelize.SequelizeDeleteCertificateAttemptRepository(config, logger);
+    this._certificateRotationAttemptRepository =
+      certificateRotationAttemptRepository ||
+      new sequelize.SequelizeCertificateRotationAttemptRepository(config, logger);
     this._ocppMessageRepository =
       ocppMessageRepository || new SequelizeOCPPMessageRepository(config, this._logger);
     this._certificateAuthorityService =
@@ -209,6 +221,10 @@ export class CertificatesModule extends AbstractModule {
 
   get deleteCertificateAttemptRepository(): IDeleteCertificateAttemptRepository {
     return this._deleteCertificateAttemptRepository;
+  }
+
+  get certificateRotationAttemptRepository(): ICertificateRotationAttemptRepository {
+    return this._certificateRotationAttemptRepository;
   }
 
   get installCertificateHelperService(): InstallCertificateHelperService {
@@ -368,7 +384,13 @@ export class CertificatesModule extends AbstractModule {
       message.context.stationId,
       message.payload.status as unknown as InstallCertificateStatusEnumType,
     );
-    // TODO: If rejected, retry and/or send to callbackUrl if originally part of a triggered refresh
+    if (message.payload.status === OCPP2_0_1.CertificateSignedStatusEnumType.Rejected) {
+      this._logger.warn(
+        'CertificateSigned REJECTED for station',
+        message.context.stationId,
+        '— manual retry may be required',
+      );
+    }
     // TODO: If accepted, revoke old certificate
   }
 
@@ -412,6 +434,37 @@ export class CertificatesModule extends AbstractModule {
           }
         }
       }
+    }
+
+    // Rotation state machine: if a Deleting rotation exists, decrement counter and mark Done.
+    const activeRotation = await this._certificateRotationAttemptRepository.readOnlyOneByQuery(
+      tenantId,
+      { where: { stationId, status: CertificateRotationStatusEnum.Deleting } },
+    );
+    if (activeRotation) {
+      if (message.payload.status !== OCPP2_0_1.DeleteCertificateStatusEnumType.Accepted) {
+        activeRotation.status = CertificateRotationStatusEnum.Failed;
+        await activeRotation.save();
+        this._logger.warn(
+          'Rotation FAILED at DeleteCertificate step for station',
+          stationId,
+          'status',
+          message.payload.status,
+        );
+        return;
+      }
+
+      activeRotation.pendingDeletes = Math.max(0, activeRotation.pendingDeletes - 1);
+      if (activeRotation.pendingDeletes === 0) {
+        activeRotation.status = CertificateRotationStatusEnum.Done;
+        this._logger.info(
+          'Root certificate rotation complete for station',
+          stationId,
+          'type',
+          activeRotation.certificateType,
+        );
+      }
+      await activeRotation.save();
     }
   }
 
@@ -503,6 +556,44 @@ export class CertificatesModule extends AbstractModule {
         }
       }
     }
+
+    // Rotation state machine: if a Discovering rotation exists for this station, advance it.
+    const activeRotation = await this._certificateRotationAttemptRepository.readOnlyOneByQuery(
+      tenantId,
+      { where: { stationId, status: CertificateRotationStatusEnum.Discovering } },
+    );
+    if (activeRotation) {
+      activeRotation.oldCertHashData = (certificateHashDataList ?? []).map(
+        (wrap) => wrap.certificateHashData,
+      );
+      activeRotation.status = CertificateRotationStatusEnum.Installing;
+      await activeRotation.save();
+
+      let newCertPem: string;
+      if (activeRotation.newCertificateFileId) {
+        newCertPem = (await this._fileStorage.getFile(
+          activeRotation.newCertificateFileId,
+        ))!.toString();
+      } else {
+        newCertPem = await this._certificateAuthorityService.getRootCACertificateFromExternalCA(
+          activeRotation.certificateType as OCPP2_1.InstallCertificateUseEnumType,
+        );
+      }
+
+      await this.installCertificateHelperService.prepareToInstallCertificate(
+        tenantId,
+        stationId,
+        newCertPem,
+        activeRotation.certificateType,
+      );
+      await this.sendCall(
+        stationId,
+        tenantId,
+        message.protocol,
+        OCPP_CallAction.InstallCertificate,
+        { certificateType: activeRotation.certificateType, certificate: newCertPem },
+      ).catch((err) => this._logger.error('Rotation: InstallCertificate sendCall failed', err));
+    }
   }
 
   @AsHandler(OCPP_2_VER_LIST, OCPP_CallAction.InstallCertificate)
@@ -511,11 +602,55 @@ export class CertificatesModule extends AbstractModule {
     props?: HandlerProperties,
   ): Promise<void> {
     this._logger.debug('InstallCertificate received:', message, props);
+    const tenantId = message.context.tenantId;
+    const stationId = message.context.stationId;
+
     await this.installCertificateHelperService.finalizeInstalledCertificate(
-      message.context.tenantId,
-      message.context.stationId,
+      tenantId,
+      stationId,
       message.payload.status,
     );
+
+    // Rotation state machine: if an Installing rotation exists, advance or fail it.
+    const activeRotation = await this._certificateRotationAttemptRepository.readOnlyOneByQuery(
+      tenantId,
+      { where: { stationId, status: CertificateRotationStatusEnum.Installing } },
+    );
+    if (activeRotation) {
+      if (message.payload.status !== OCPP2_0_1.InstallCertificateStatusEnumType.Accepted) {
+        activeRotation.status = CertificateRotationStatusEnum.Failed;
+        await activeRotation.save();
+        this._logger.warn(
+          'Rotation FAILED at InstallCertificate step for station',
+          stationId,
+          'status',
+          message.payload.status,
+        );
+        return;
+      }
+
+      const oldHashes = activeRotation.oldCertHashData as OCPP2_0_1.CertificateHashDataType[];
+      if (!oldHashes || oldHashes.length === 0) {
+        activeRotation.status = CertificateRotationStatusEnum.Done;
+        await activeRotation.save();
+        this._logger.info('Rotation complete (no old certs to delete) for station', stationId);
+        return;
+      }
+
+      activeRotation.status = CertificateRotationStatusEnum.Deleting;
+      activeRotation.pendingDeletes = oldHashes.length;
+      await activeRotation.save();
+
+      for (const hashData of oldHashes) {
+        await this.sendCall(
+          stationId,
+          tenantId,
+          message.protocol,
+          OCPP_CallAction.DeleteCertificate,
+          { certificateHashData: hashData },
+        ).catch((err) => this._logger.error('Rotation: DeleteCertificate sendCall failed', err));
+      }
+    }
   }
 
   private async _verifySignCertRequest(
